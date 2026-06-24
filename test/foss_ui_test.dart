@@ -1,3 +1,5 @@
+// The barrel is imported purely so this smoke test fails to compile if the
+// public entry point ever breaks. It exports nothing usable yet, hence unused.
 // ignore_for_file: unused_import
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foss_ui/foss_ui.dart';

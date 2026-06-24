@@ -6,8 +6,5 @@
 /// See NOTICE for attribution.
 library;
 
-// Theme
-export 'src/theme/theme.dart';
-
-// Components
 export 'src/components/components.dart';
+export 'src/theme/theme.dart';

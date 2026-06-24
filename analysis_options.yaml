@@ -1,4 +1,18 @@
-include: package:flutter_lints/flutter.yaml
+include: package:very_good_analysis/analysis_options.yaml
 
-# Additional information about this file can be found at
-# https://dart.dev/guides/language/analysis-options
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    public_member_api_docs: error
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.tailor.dart"
+
+linter:
+  rules:
+    public_member_api_docs: true
+    require_trailing_commas: true
+    sort_pub_dependencies: true
