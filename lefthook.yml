@@ -1,0 +1,25 @@
+# Lefthook config for foss_ui (Flutter package, FVM-managed)
+# https://lefthook.dev/
+
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: "*.dart"
+      run: fvm dart format {staged_files}
+      stage_fixed: true
+    analyze:
+      glob: "*.dart"
+      run: fvm flutter analyze
+
+pre-push:
+  commands:
+    test:
+      run: fvm flutter test
+
+# Prepend an emoji based on the conventional-commit type.
+prepare-commit-msg:
+  scripts:
+    "emoji.sh":
+      runner: sh
+
