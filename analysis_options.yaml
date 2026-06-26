@@ -7,9 +7,6 @@ analyzer:
     strict-raw-types: true
   errors:
     public_member_api_docs: error
-  exclude:
-    - "**/*.g.dart"
-    - "**/*.tailor.dart"
 
 linter:
   rules:
