@@ -6,6 +6,8 @@
 // FossApp wrapper.
 
 export 'colors/foss_colors.dart';
+export 'motion/foss_motion.dart';
 export 'radii/foss_radii.dart';
+export 'shadows/foss_shadows.dart';
 export 'spacing/foss_spacing.dart';
 export 'typography/foss_typography.dart';
