@@ -5,3 +5,4 @@
 
 export 'button/foss_button.dart';
 export 'spinner/foss_spinner.dart';
+export 'text_field/foss_text_field.dart';
