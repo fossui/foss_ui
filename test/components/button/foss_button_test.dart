@@ -6,9 +6,15 @@ import 'package:foss_ui/foss_ui.dart';
 
 import 'host.dart';
 
-BoxDecoration _decoration(WidgetTester tester) =>
+ShapeDecoration _decoration(WidgetTester tester) =>
     tester.widget<DecoratedBox>(find.byType(DecoratedBox)).decoration
-        as BoxDecoration;
+        as ShapeDecoration;
+
+double _radius(WidgetTester tester) =>
+    (_decoration(tester).shape as RoundedSuperellipseBorder).borderRadius
+        .resolve(TextDirection.ltr)
+        .topLeft
+        .x;
 
 void main() {
   group('FossButton interaction', () {
@@ -398,7 +404,7 @@ void main() {
         ),
       );
 
-      expect(_decoration(tester).borderRadius, BorderRadius.circular(4));
+      expect(_radius(tester), 4);
       final box = tester.widget<ConstrainedBox>(
         find
             .descendant(

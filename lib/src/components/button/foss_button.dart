@@ -274,13 +274,13 @@ class _FossButtonState extends State<FossButton> {
     }
 
     Widget surface = DecoratedBox(
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: visuals.background.resolve(states),
-        borderRadius: BorderRadius.circular(visuals.borderRadius),
-        border: visuals.side == BorderSide.none
-            ? null
-            : Border.fromBorderSide(visuals.side),
-        boxShadow: shadow,
+        shape: RoundedSuperellipseBorder(
+          side: visuals.side,
+          borderRadius: BorderRadius.circular(visuals.borderRadius),
+        ),
+        shadows: shadow,
       ),
       child: Padding(
         padding: visuals.padding,
@@ -458,12 +458,15 @@ class _FocusRingPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = (Offset.zero & size).inflate(2);
-    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(radius + 2));
+    final shape = RSuperellipse.fromRectAndRadius(
+      rect,
+      Radius.circular(radius + 2),
+    );
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
-    canvas.drawRRect(rrect, paint);
+    canvas.drawRSuperellipse(shape, paint);
   }
 
   @override
