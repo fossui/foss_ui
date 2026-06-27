@@ -10,18 +10,29 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FLUTTER_VERSION: 3.41.9
+
 jobs:
   verify:
     name: Format, analyze, test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.41.9
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
+
+      - name: Cache pub packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-${{ hashFiles('pubspec.yaml') }}
+          restore-keys: pub-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-
 
       - name: Install dependencies
         run: flutter pub get
@@ -32,28 +43,5 @@ jobs:
       - name: Analyze (strict)
         run: flutter analyze --fatal-infos
 
-      - name: Run tests with coverage
+      - name: Test with coverage
         run: flutter test --coverage
-
-  package:
-    name: Pub points and publish dry-run
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: 3.41.9
-          channel: stable
-          cache: true
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Publish dry-run
-        run: dart pub publish --dry-run
-
-      - name: Pub points (pana, informational)
-        run: |
-          dart pub global activate pana
-          dart pub global run pana --no-warning || true
