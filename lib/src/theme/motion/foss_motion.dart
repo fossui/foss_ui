@@ -6,6 +6,9 @@ part 'foss_motion.tailor.dart';
 /// Animation durations. Gate any token-driven animation on
 /// `MediaQuery.disableAnimations` so reduced-motion users get no motion.
 ///
+/// Unlike the other bundles, durations are not eased across a theme transition
+/// (a cycle length has no meaningful midpoint), so they switch at once.
+///
 /// ```dart
 /// const m = FossMotion.standard;
 /// AnimatedOpacity(duration: m.caretBlink, opacity: o, child: child);

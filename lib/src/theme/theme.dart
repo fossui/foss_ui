@@ -1,11 +1,12 @@
 // Barrel for the foss_ui theme system.
 //
-// Exports the token ThemeExtensions (FossColors, and later FossTypography,
-// FossRadii, FossSpacing, FossShadows, FossMotion), the FossThemeData root, the
-// FossTheme InheritedWidget, and the context.fossTheme accessor. There is no
-// FossApp wrapper.
+// Exports the six token ThemeExtensions (FossColors, FossTypography, FossRadii,
+// FossSpacing, FossShadows, FossMotion), the FossThemeData root, the FossTheme
+// InheritedWidget, and the context.fossTheme accessor. There is no FossApp
+// wrapper.
 
 export 'colors/foss_colors.dart';
+export 'foss_theme.dart';
 export 'motion/foss_motion.dart';
 export 'radii/foss_radii.dart';
 export 'shadows/foss_shadows.dart';

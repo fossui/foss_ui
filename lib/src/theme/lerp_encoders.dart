@@ -32,5 +32,5 @@ class BoxShadowListLerpEncoder extends ThemeEncoder<List<BoxShadow>> {
 
   @override
   List<BoxShadow> lerp(List<BoxShadow> a, List<BoxShadow> b, double t) =>
-      BoxShadow.lerpList(a, b, t) ?? b;
+      BoxShadow.lerpList(a, b, t) ?? [];
 }

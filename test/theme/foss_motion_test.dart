@@ -14,4 +14,14 @@ void main() {
     expect(m.skeleton, const Duration(seconds: 3));
     expect(m.caretBlink, FossMotion.standard.caretBlink);
   });
+
+  test('lerp snaps durations at the midpoint, it does not ease', () {
+    const a = FossMotion.standard;
+    const b = FossMotion(
+      skeleton: Duration(seconds: 4),
+      caretBlink: Duration(seconds: 1),
+    );
+    expect(a.lerp(b, 0.4).skeleton, a.skeleton); // before midpoint -> a
+    expect(a.lerp(b, 0.6).skeleton, b.skeleton); // after midpoint -> b
+  });
 }

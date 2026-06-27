@@ -23,4 +23,9 @@ void main() {
     const dense = FossSpacing(unit: 2);
     expect(dense(4), 8);
   });
+
+  test('lerp eases the unit', () {
+    final mid = s.lerp(const FossSpacing(unit: 8), 0.5);
+    expect(mid.unit, 6); // 4 -> 8 halfway
+  });
 }
