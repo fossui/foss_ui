@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
-import 'package:foss_ui/src/components/radio/foss_radio_group.dart';
 import 'package:foss_ui/src/theme/theme.dart';
 
+part 'foss_radio_group.dart';
 part 'foss_radio_style.dart';
 
 const double _circleSize = 18;
@@ -199,7 +199,10 @@ class _FossRadioState<T> extends State<FossRadio<T>> {
       ),
     );
     if (!hasText) return circle;
-    final line = (v.labelStyle.fontSize ?? 16) * (v.labelStyle.height ?? 1);
+    // Center on the first text line: the title when present, else the
+    // description, so a description-only option still aligns.
+    final firstLine = widget.label != null ? v.labelStyle : v.descriptionStyle;
+    final line = (firstLine.fontSize ?? 16) * (firstLine.height ?? 1);
     return SizedBox(
       height: line,
       child: Center(widthFactor: 1, child: circle),
@@ -276,7 +279,10 @@ class _FossRadioState<T> extends State<FossRadio<T>> {
 
     if (ringColor != null) {
       circle = CustomPaint(
-        foregroundPainter: _RingPainter(color: ringColor),
+        foregroundPainter: _RingPainter(
+          color: ringColor,
+          offsetColor: colors.background,
+        ),
         child: circle,
       );
     }
@@ -449,22 +455,39 @@ class _RimPainter extends CustomPainter {
 }
 
 /// Paints the focus ring: a circle outset just past the control edge, with a
-/// 1px gap (the offset) matching the resting design.
+/// 1px gap (the offset) matching the resting design. The gap is filled with
+/// [offsetColor] (the surface) so the ring reads as detached even over a tinted
+/// card.
 class _RingPainter extends CustomPainter {
-  const _RingPainter({required this.color});
+  const _RingPainter({required this.color, required this.offsetColor});
 
   final Color color;
+  final Color offsetColor;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final radius = size.width / 2 + _ringOffset + _ringWidth / 2;
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = _ringWidth;
-    canvas.drawCircle(size.center(Offset.zero), radius, paint);
+    final center = size.center(Offset.zero);
+    final edge = size.width / 2;
+    canvas
+      ..drawCircle(
+        center,
+        edge + _ringOffset / 2,
+        Paint()
+          ..color = offsetColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = _ringOffset,
+      )
+      ..drawCircle(
+        center,
+        edge + _ringOffset + _ringWidth / 2,
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = _ringWidth,
+      );
   }
 
   @override
-  bool shouldRepaint(_RingPainter oldDelegate) => oldDelegate.color != color;
+  bool shouldRepaint(_RingPainter oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.offsetColor != offsetColor;
 }

@@ -1,8 +1,4 @@
-import 'package:flutter/widgets.dart';
-import 'package:foss_ui/src/components/radio/foss_radio.dart';
-import 'package:foss_ui/src/theme/theme.dart';
-
-const double _disabledOpacity = 0.64;
+part of 'foss_radio.dart';
 
 /// The visual treatment of a [FossRadioGroup].
 enum FossRadioGroupVariant {
@@ -56,7 +52,7 @@ class FossRadioGroup<T> extends StatelessWidget {
   final T? groupValue;
 
   /// Called with the tapped option's value. Null disables the group.
-  final ValueChanged<T?>? onChanged;
+  final ValueChanged<T>? onChanged;
 
   /// Optional label rendered above the options.
   final String? label;
@@ -136,7 +132,7 @@ class FossRadioGroupScope<T> extends InheritedWidget {
   final T? groupValue;
 
   /// The group's change callback, invoked with a tapped option's value.
-  final ValueChanged<T?>? onChanged;
+  final ValueChanged<T>? onChanged;
 
   /// Whether the group is interactive.
   final bool enabled;

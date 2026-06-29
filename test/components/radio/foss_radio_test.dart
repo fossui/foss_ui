@@ -15,7 +15,7 @@ ShapeDecoration _circle(WidgetTester tester, String label) =>
 
 Widget _group({
   String? groupValue,
-  ValueChanged<String?>? onChanged,
+  ValueChanged<String>? onChanged,
   String? label,
   String? errorText,
   bool enabled = true,
@@ -212,6 +212,51 @@ void main() {
       expect(
         _circle(tester, 'Apple').color,
         isNot(FossThemeData.dark.colors.background),
+      );
+    });
+  });
+
+  group('FossRadio responsive', () {
+    testWidgets('circle holds its size under 2x text scale', (tester) async {
+      await tester.pumpWidget(_group(onChanged: (_) {}));
+      final base = tester.getSize(_circleOf('Apple').first);
+
+      await tester.pumpWidget(
+        host(
+          MediaQuery.withClampedTextScaling(
+            minScaleFactor: 2,
+            maxScaleFactor: 2,
+            child: FossRadioGroup<String>(
+              onChanged: (_) {},
+              children: const [
+                FossRadio(value: 'a', label: 'Apple'),
+                FossRadio(value: 'b', label: 'Banana'),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      expect(tester.getSize(_circleOf('Apple').first), base);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('lays the circle after the label in RTL', (tester) async {
+      await tester.pumpWidget(
+        host(
+          Directionality(
+            textDirection: TextDirection.rtl,
+            child: FossRadioGroup<String>(
+              onChanged: (_) {},
+              children: const [FossRadio(value: 'a', label: 'Apple')],
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        tester.getCenter(_circleOf('Apple').first).dx,
+        greaterThan(tester.getCenter(find.text('Apple')).dx),
       );
     });
   });
