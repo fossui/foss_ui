@@ -11,6 +11,7 @@ export 'button/foss_button.dart';
 export 'card/foss_card.dart';
 export 'checkbox/foss_checkbox.dart';
 export 'dialog/foss_dialog.dart';
+export 'progress/foss_progress.dart';
 export 'radio/foss_radio.dart';
 export 'spinner/foss_spinner.dart';
 export 'text_field/foss_text_field.dart';
