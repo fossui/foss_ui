@@ -22,3 +22,4 @@ export 'text_field/foss_text_field.dart';
 export 'toast/foss_toast.dart';
 export 'toast/foss_toast_controller.dart';
 export 'toast/foss_toaster.dart';
+export 'tooltip/foss_tooltip.dart';
