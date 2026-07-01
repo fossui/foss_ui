@@ -49,12 +49,16 @@ enum FossTextFieldSize {
   lg,
 }
 
-/// A single-line text field in the foss_ui style.
+/// A text field in the foss_ui style.
 ///
 /// Pairs an editable box with an optional [label] above and a [helperText] or
 /// [errorText] caption below. Colors, radius, type, and spacing come from
 /// `context.fossTheme`, so a global retheme restyles every field. For a
 /// one-off, pass a [FossTextFieldStyle] to [style].
+///
+/// Single line by default. Set [maxLines] to anything other than 1 (or null to
+/// grow without bound) for a multiline textarea: it grows with content,
+/// top-aligns its text, and takes no [leading] / [trailing] icons.
 ///
 /// A non-null [errorText] puts the field in its invalid state and replaces the
 /// helper caption. Passing `enabled: false` disables it. [leading] and
@@ -90,11 +94,17 @@ class FossTextField extends StatefulWidget {
     this.obscureText = false,
     this.keyboardType,
     this.textInputAction,
+    this.minLines,
+    this.maxLines = 1,
     this.onChanged,
     this.onSubmitted,
     this.style,
     super.key,
-  });
+  }) : assert(
+         maxLines == 1 || (leading == null && trailing == null),
+         'leading and trailing are single-line only; a multiline field has no '
+         'icon rail',
+       );
 
   /// Holds the editable text. Created and disposed internally when null.
   final TextEditingController? controller;
@@ -135,6 +145,15 @@ class FossTextField extends StatefulWidget {
 
   /// The action button on the keyboard (next, done, search, ...).
   final TextInputAction? textInputAction;
+
+  /// Starting line count for a multiline field. Ignored when [maxLines] is 1.
+  final int? minLines;
+
+  /// Maximum visible lines. The default 1 is a single-line input; any other
+  /// value (including null, which grows without bound) makes the field a
+  /// multiline textarea: it grows with content, top-aligns its text, and drops
+  /// the [leading] / [trailing] slots.
+  final int? maxLines;
 
   /// Called whenever the text changes.
   final ValueChanged<String>? onChanged;
@@ -240,6 +259,7 @@ class _FossTextFieldState extends State<FossTextField>
         : v.helperColor;
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: theme.spacing(2),
       children: [
@@ -300,15 +320,28 @@ class _FossTextFieldState extends State<FossTextField>
 
     final showShadow = widget.enabled && !focused && !hasError;
 
+    // A multiline field grows with its text: top-align the content, add
+    // vertical padding, size the min height to the starting line count, and
+    // drop the single-line icon rail.
+    final multiline = widget.maxLines != 1;
+    // Vertical inset trims 1px against the border, matching the horizontal
+    // inset (coss `py-[calc(--spacing(1.5)-1)]`).
+    final padding = multiline
+        ? v.padding.add(EdgeInsets.symmetric(vertical: theme.spacing(1.5) - 1))
+        : v.padding;
+
     Widget content = Padding(
-      padding: v.padding,
+      padding: padding,
       child: Row(
         spacing: v.gap,
+        crossAxisAlignment: multiline
+            ? CrossAxisAlignment.start
+            : CrossAxisAlignment.center,
         children: [
-          if (widget.leading case final leading?)
+          if (widget.leading case final leading? when !multiline)
             IconTheme.merge(data: v.iconTheme, child: leading),
           Expanded(child: _buildEditable(theme, v)),
-          if (widget.trailing case final trailing?)
+          if (widget.trailing case final trailing? when !multiline)
             IconTheme.merge(data: v.iconTheme, child: trailing),
         ],
       ),
@@ -324,7 +357,9 @@ class _FossTextFieldState extends State<FossTextField>
         shadows: showShadow ? v.shadow : const [],
       ),
       child: ConstrainedBox(
-        constraints: BoxConstraints(minHeight: v.minHeight),
+        constraints: BoxConstraints(
+          minHeight: multiline ? _multilineMinHeight(theme, v) : v.minHeight,
+        ),
         child: content,
       ),
     );
@@ -369,6 +404,7 @@ class _FossTextFieldState extends State<FossTextField>
 
   Widget _buildEditable(FossThemeData theme, _FieldVisuals v) {
     final colors = theme.colors;
+    final multiline = widget.maxLines != 1;
     final editable = EditableText(
       key: _editableKey,
       controller: _controller,
@@ -389,6 +425,8 @@ class _FossTextFieldState extends State<FossTextField>
       keyboardType: widget.keyboardType,
       textInputAction: widget.textInputAction,
       obscureText: widget.obscureText,
+      minLines: widget.minLines,
+      maxLines: widget.maxLines,
       onChanged: widget.onChanged,
       onSubmitted: widget.onSubmitted,
       enableInteractiveSelection: widget.enabled,
@@ -399,6 +437,7 @@ class _FossTextFieldState extends State<FossTextField>
       child: Semantics(
         label: widget.label,
         textField: true,
+        multiline: multiline,
         enabled: widget.enabled,
         child: Stack(
           children: [
@@ -409,8 +448,10 @@ class _FossTextFieldState extends State<FossTextField>
                     ? IgnorePointer(
                         child: Text(
                           hint,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          maxLines: widget.maxLines,
+                          overflow: multiline
+                              ? TextOverflow.clip
+                              : TextOverflow.ellipsis,
                           style: v.textStyle.copyWith(color: v.hintColor),
                         ),
                       )
@@ -421,6 +462,16 @@ class _FossTextFieldState extends State<FossTextField>
         ),
       ),
     );
+  }
+
+  // Minimum box height for a multiline field: the starting line count times the
+  // resolved line height, plus the vertical padding. Defaults to 3 lines when
+  // [minLines] is unset, matching the reference textarea's resting size.
+  double _multilineMinHeight(FossThemeData theme, _FieldVisuals v) {
+    final lines = widget.minLines ?? 3;
+    final style = v.textStyle;
+    final lineHeight = (style.height ?? 1.5) * (style.fontSize ?? 16);
+    return lines * lineHeight + (theme.spacing(1.5) - 1) * 2;
   }
 
   // Centers the box in a region at least [_minTapTarget] tall so the field

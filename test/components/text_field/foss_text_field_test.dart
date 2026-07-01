@@ -319,4 +319,45 @@ void main() {
       expect(editable.controller.text, 'secret');
     });
   });
+
+  group('FossTextField multiline', () {
+    testWidgets('passes minLines and maxLines to the editable', (tester) async {
+      await tester.pumpWidget(
+        host(const FossTextField(minLines: 3, maxLines: 6)),
+      );
+
+      final editable = tester.widget<EditableText>(find.byType(EditableText));
+      expect(editable.minLines, 3);
+      expect(editable.maxLines, 6);
+    });
+
+    testWidgets('grows taller than a single-line field', (tester) async {
+      await tester.pumpWidget(host(const FossTextField()));
+      final single = tester.getSize(_boxFinder).height;
+
+      await tester.pumpWidget(host(const FossTextField(maxLines: null)));
+      final multi = tester.getSize(_boxFinder).height;
+
+      expect(multi, greaterThan(single));
+    });
+
+    testWidgets('accepts multiple lines of text', (tester) async {
+      final controller = TextEditingController();
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(
+        host(FossTextField(controller: controller, maxLines: null)),
+      );
+
+      await tester.enterText(find.byType(EditableText), 'line one\nline two');
+
+      expect(controller.text, 'line one\nline two');
+    });
+
+    testWidgets('rejects icon slots on a multiline field', (tester) async {
+      expect(
+        () => FossTextField(maxLines: null, leading: const SizedBox()),
+        throwsAssertionError,
+      );
+    });
+  });
 }
