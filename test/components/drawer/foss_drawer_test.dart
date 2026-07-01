@@ -270,6 +270,117 @@ void main() {
     expect(find.text('Instant'), findsOneWidget);
   });
 
+  testWidgets('renders a description in the header', (tester) async {
+    final ctx = await pumpHost(tester);
+    unawaited(
+      showFossDrawer<void>(
+        context: ctx,
+        builder: (context) => const FossDrawer(
+          title: Text('Titled'),
+          description: Text('A supporting line.'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('A supporting line.'), findsOneWidget);
+  });
+
+  testWidgets('drag off the top edge dismisses', (tester) async {
+    final ctx = await pumpHost(tester);
+    unawaited(
+      showFossDrawer<void>(
+        context: ctx,
+        side: FossDrawerSide.top,
+        builder: (context) => const FossDrawer(title: Text('Topper')),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('Topper')),
+    );
+    await gesture.moveBy(const Offset(0, -500));
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(find.text('Topper'), findsNothing);
+  });
+
+  for (final (side, delta) in <(FossDrawerSide, Offset)>[
+    (FossDrawerSide.left, Offset(-500, 0)),
+    (FossDrawerSide.right, Offset(500, 0)),
+  ]) {
+    testWidgets('drag off the $side edge dismisses', (tester) async {
+      final ctx = await pumpHost(tester);
+      unawaited(
+        showFossDrawer<void>(
+          context: ctx,
+          side: side,
+          builder: (context) => const FossDrawer(title: Text('Panel')),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.text('Panel')),
+      );
+      await gesture.moveBy(delta);
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(find.text('Panel'), findsNothing);
+    });
+  }
+
+  testWidgets('a side panel shows its handle on the exposed edge', (
+    tester,
+  ) async {
+    final ctx = await pumpHost(tester);
+    unawaited(
+      showFossDrawer<void>(
+        context: ctx,
+        side: FossDrawerSide.right,
+        builder: (context) =>
+            const FossDrawer(title: Text('Rail'), showHandle: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Rail'), findsOneWidget);
+  });
+
+  testWidgets('bottom drawer without actions pads the safe area', (
+    tester,
+  ) async {
+    tester.view.padding = const FakeViewPadding(bottom: 40);
+    addTearDown(tester.view.resetPadding);
+
+    final ctx = await pumpHost(tester);
+    unawaited(
+      showFossDrawer<void>(
+        context: ctx,
+        builder: (context) => const FossDrawer(content: Text('No footer')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('No footer'), findsOneWidget);
+  });
+
+  testWidgets('survives an external rebuild while open', (tester) async {
+    final ctx = await pumpHost(tester);
+    unawaited(
+      showFossDrawer<void>(
+        context: ctx,
+        builder: (context) => const FossDrawer(title: Text('Persist')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Persist'), findsOneWidget);
+
+    // Re-pump the whole tree: the route's page rebuilds, updating the side
+    // scope in place.
+    await pumpHost(tester);
+    await tester.pumpAndSettle();
+    expect(find.text('Persist'), findsOneWidget);
+  });
+
   testWidgets('renders on a dark theme', (tester) async {
     late BuildContext ctx;
     await tester.pumpWidget(

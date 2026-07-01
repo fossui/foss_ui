@@ -314,5 +314,92 @@ void main() {
       final popup = tester.getRect(popupText('Copy'));
       expect(popup.center.dx, greaterThan(anchor.center.dx));
     });
+
+    testWidgets('top side stays put under RTL', (tester) async {
+      await tester.pumpWidget(
+        host(tooltip(), direction: TextDirection.rtl),
+      );
+
+      await tester.longPress(find.byKey(triggerKey));
+      await tester.pump(showDelay);
+      await tester.pumpAndSettle();
+
+      final anchor = tester.getRect(find.byKey(triggerKey));
+      final popup = tester.getRect(popupText('Copy'));
+      expect(popup.center.dy, lessThan(anchor.center.dy));
+    });
+  });
+
+  group('extra coverage', () {
+    testWidgets('re-requesting show while open restarts the animation', (
+      tester,
+    ) async {
+      final node = FocusNode();
+      addTearDown(node.dispose);
+      await tester.pumpWidget(
+        host(
+          tooltip(
+            child: Focus(
+              focusNode: node,
+              child: triggerBox(key: triggerKey),
+            ),
+          ),
+        ),
+      );
+
+      await hover(tester, find.byKey(triggerKey));
+      await tester.pump(showDelay);
+      await tester.pumpAndSettle();
+      expect(popupText('Copy'), findsOneWidget);
+
+      // Focus while already showing re-enters the show path.
+      node.requestFocus();
+      await tester.pump();
+      expect(popupText('Copy'), findsOneWidget);
+    });
+
+    testWidgets('opens on the left when there is room', (tester) async {
+      await tester.pumpWidget(
+        host(
+          tooltip(side: FossTooltipSide.left),
+          alignment: Alignment.centerRight,
+        ),
+      );
+
+      await tester.longPress(find.byKey(triggerKey));
+      await tester.pump(showDelay);
+      await tester.pumpAndSettle();
+
+      final anchor = tester.getRect(find.byKey(triggerKey));
+      final popup = tester.getRect(popupText('Copy'));
+      expect(popup.center.dx, lessThan(anchor.center.dx));
+    });
+
+    testWidgets('rebuilding the host while open relays out the popup', (
+      tester,
+    ) async {
+      late StateSetter setOuter;
+      var side = FossTooltipSide.top;
+      await tester.pumpWidget(
+        host(
+          StatefulBuilder(
+            builder: (context, setState) {
+              setOuter = setState;
+              return tooltip(side: side);
+            },
+          ),
+        ),
+      );
+
+      await tester.longPress(find.byKey(triggerKey));
+      await tester.pump(showDelay);
+      await tester.pumpAndSettle();
+      expect(popupText('Copy'), findsOneWidget);
+
+      setOuter(() => side = FossTooltipSide.bottom);
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    });
   });
 }

@@ -269,6 +269,110 @@ void main() {
     });
   });
 
+  group('FossTextField style', () {
+    testWidgets('a per-instance style overrides the resolved visuals', (
+      tester,
+    ) async {
+      const shadow = [BoxShadow(color: Color(0x22000000), blurRadius: 2)];
+      await tester.pumpWidget(
+        host(
+          const FossTextField(
+            label: 'L',
+            helperText: 'H',
+            style: FossTextFieldStyle(
+              backgroundColor: Color(0xFF102030),
+              borderColor: Color(0xFF405060),
+              borderRadius: 4,
+              contentPadding: EdgeInsets.all(2),
+              minHeight: 40,
+              textStyle: TextStyle(fontSize: 20),
+              labelStyle: TextStyle(fontSize: 14),
+              helperStyle: TextStyle(fontSize: 10),
+              iconSize: 12,
+              gap: 3,
+              shadow: shadow,
+            ),
+          ),
+        ),
+      );
+
+      expect(_borderColor(tester), const Color(0xFF405060));
+      expect(_decoration(tester).color, const Color(0xFF102030));
+      expect(_decoration(tester).shadows, shadow);
+    });
+  });
+
+  group('FossTextField gesture', () {
+    testWidgets('tapping an enabled field drives the selection detector', (
+      tester,
+    ) async {
+      final focusNode = FocusNode();
+      addTearDown(focusNode.dispose);
+      await tester.pumpWidget(host(FossTextField(focusNode: focusNode)));
+
+      await tester.tap(find.byType(FossTextField));
+      await tester.pump();
+
+      expect(focusNode.hasFocus, isTrue);
+    });
+  });
+
+  group('FossTextField adoption', () {
+    testWidgets('adopting an external controller uses it', (tester) async {
+      await tester.pumpWidget(host(const FossTextField()));
+
+      final controller = TextEditingController();
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(host(FossTextField(controller: controller)));
+
+      await tester.enterText(find.byType(EditableText), 'typed');
+
+      expect(controller.text, 'typed');
+    });
+
+    testWidgets('adopting an external focus node tracks it', (tester) async {
+      await tester.pumpWidget(host(const FossTextField()));
+
+      final node = FocusNode();
+      addTearDown(node.dispose);
+      await tester.pumpWidget(host(FossTextField(focusNode: node)));
+
+      await tester.enterText(find.byType(EditableText), 'x');
+      await tester.pump();
+
+      expect(_borderColor(tester), FossColors.light.ring);
+    });
+  });
+
+  group('FossTextField focused error', () {
+    testWidgets('deepens the border and paints the destructive ring', (
+      tester,
+    ) async {
+      final node = FocusNode();
+      addTearDown(node.dispose);
+      await tester.pumpWidget(
+        host(FossTextField(errorText: 'Bad', focusNode: node)),
+      );
+
+      node.requestFocus();
+      await tester.pump();
+
+      expect(
+        _borderColor(tester),
+        FossColors.light.destructive.withValues(alpha: 0.64),
+      );
+
+      // Rebuild while the ring stays up so its painter is diffed against the
+      // previous instance.
+      await tester.pumpWidget(
+        host(FossTextField(errorText: 'Worse', focusNode: node)),
+      );
+      await tester.pump();
+
+      expect(find.text('Worse'), findsOneWidget);
+    });
+  });
+
   group('FossTextField dark', () {
     testWidgets('lifts the fill above the bare surface', (tester) async {
       await tester.pumpWidget(

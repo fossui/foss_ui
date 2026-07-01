@@ -1,3 +1,6 @@
+import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foss_ui/foss_ui.dart';
 
@@ -143,6 +146,109 @@ void main() {
       );
 
       expect(find.text('Fruit'), findsOneWidget);
+    });
+
+    testWidgets('reduce motion opens and closes without an animation', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          reduceMotion: true,
+          FossSelect<String>(
+            placeholder: 'Pick',
+            items: _items,
+            onChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Pick'));
+      await tester.pumpAndSettle();
+      expect(find.text('Banana'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.text('Banana'), findsNothing);
+    });
+
+    testWidgets('hovering a row moves the highlight so enter picks it', (
+      tester,
+    ) async {
+      String? picked;
+      await tester.pumpWidget(
+        host(
+          FossSelect<String>(
+            placeholder: 'Pick',
+            items: _items,
+            onChanged: (v) => picked = v,
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Pick'));
+      await tester.pumpAndSettle();
+
+      final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await gesture.addPointer(location: Offset.zero);
+      addTearDown(gesture.removePointer);
+      await gesture.moveTo(tester.getCenter(find.text('Banana')));
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+
+      expect(picked, 'b', reason: 'hover moved the highlight off Apple');
+    });
+
+    testWidgets('renders a leading icon on a row', (tester) async {
+      const iconKey = Key('leading-icon');
+      await tester.pumpWidget(
+        host(
+          FossSelect<String>(
+            placeholder: 'Pick',
+            onChanged: (_) {},
+            items: const [
+              FossSelectItem(
+                value: 'a',
+                label: 'Apple',
+                icon: SizedBox(key: iconKey),
+              ),
+              FossSelectItem(value: 'b', label: 'Banana'),
+            ],
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Pick'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(iconKey), findsOneWidget);
+    });
+
+    testWidgets('the popup flips above when there is no room below', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          alignment: Alignment.bottomCenter,
+          FossSelect<String>(
+            placeholder: 'Pick',
+            items: _items,
+            onChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Pick'));
+      await tester.pumpAndSettle();
+
+      final trigger = tester.getRect(find.text('Pick'));
+      final row = tester.getRect(find.text('Banana'));
+      expect(
+        row.center.dy,
+        lessThan(trigger.top),
+        reason: 'the popup sits above the trigger',
+      );
     });
   });
 }

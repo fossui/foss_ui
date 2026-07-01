@@ -238,4 +238,122 @@ void main() {
       );
     });
   });
+
+  group('FossSwitch drag', () {
+    // A timed horizontal drag that ends with real velocity in the [dx]
+    // direction, so the release resolves through the flick branch.
+    Future<void> flick(WidgetTester tester, double dx) async {
+      final center = tester.getCenter(find.byType(FossSwitch));
+      final gesture = await tester.startGesture(center);
+      for (var i = 1; i <= 8; i++) {
+        await gesture.moveTo(
+          center + Offset(dx * i / 8, 0),
+          timeStamp: Duration(milliseconds: i * 4),
+        );
+      }
+      await gesture.up(timeStamp: const Duration(milliseconds: 36));
+      await tester.pump();
+    }
+
+    testWidgets('a still drag release toggles', (tester) async {
+      bool? next;
+      await tester.pumpWidget(
+        host(FossSwitch(value: false, onChanged: (v) => next = v)),
+      );
+
+      await tester.drag(find.byType(FossSwitch), const Offset(24, 0));
+      await tester.pump();
+
+      expect(next, isTrue);
+    });
+
+    testWidgets('a flick to the trailing edge turns on', (tester) async {
+      bool? next;
+      await tester.pumpWidget(
+        host(FossSwitch(value: false, onChanged: (v) => next = v)),
+      );
+
+      await flick(tester, 24);
+
+      expect(next, isTrue);
+    });
+
+    testWidgets('a flick back to the leading edge turns off', (tester) async {
+      bool? next;
+      await tester.pumpWidget(
+        host(FossSwitch(value: true, onChanged: (v) => next = v)),
+      );
+
+      await flick(tester, -24);
+
+      expect(next, isFalse);
+    });
+
+    testWidgets('RTL flick to the visual end turns on', (tester) async {
+      bool? next;
+      await tester.pumpWidget(
+        host(
+          Directionality(
+            textDirection: TextDirection.rtl,
+            child: FossSwitch(value: false, onChanged: (v) => next = v),
+          ),
+        ),
+      );
+
+      // Under RTL the visual end is the left edge, so a leftward flick is on.
+      await flick(tester, -24);
+
+      expect(next, isTrue);
+    });
+  });
+
+  group('FossSwitch style and focus ring', () {
+    testWidgets('style overrides the track and thumb geometry', (tester) async {
+      await tester.pumpWidget(
+        host(
+          const FossSwitch(
+            value: false,
+            style: FossSwitchStyle(
+              trackWidth: 44,
+              trackHeight: 26,
+              thumbSize: 24,
+            ),
+          ),
+        ),
+      );
+
+      final boxes = tester.widgetList<SizedBox>(
+        find.descendant(
+          of: find.byType(FossSwitch),
+          matching: find.byType(SizedBox),
+        ),
+      );
+      expect(boxes.any((b) => b.width == 44 && b.height == 26), isTrue);
+      expect(boxes.any((b) => b.width == 24 && b.height == 24), isTrue);
+    });
+
+    testWidgets('the focus ring survives a rebuild', (tester) async {
+      late StateSetter setOuter;
+      await tester.pumpWidget(
+        host(
+          StatefulBuilder(
+            builder: (context, setState) {
+              setOuter = setState;
+              return FossSwitch(value: false, onChanged: (_) {});
+            },
+          ),
+        ),
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+
+      // A rebuild while focused re-creates the ring painter, exercising its
+      // repaint check.
+      setOuter(() {});
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    });
+  });
 }

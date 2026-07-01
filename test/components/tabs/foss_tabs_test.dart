@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -315,6 +316,209 @@ void main() {
       final stripCenter = tester.getCenter(find.text('Two')).dx;
       final pillLeft = tester.getTopLeft(_filled(colors.background)).dx;
       expect(pillLeft, greaterThan(stripCenter));
+    });
+  });
+
+  group('FossTabs extra coverage', () {
+    test('a runtime-built tab holds its data', () {
+      final tab = FossTab<String>(value: 'one', label: 'One'.toUpperCase());
+      expect(tab.value, 'one');
+      expect(tab.label, 'ONE');
+      expect(tab.enabled, isTrue);
+    });
+
+    testWidgets('dropping the active tab disposes its node and clears the '
+        'indicator', (tester) async {
+      late StateSetter setOuter;
+      var full = true;
+      await tester.pumpWidget(
+        host(
+          StatefulBuilder(
+            builder: (context, setState) {
+              setOuter = setState;
+              return FossTabs<String>(
+                initialValue: 'one',
+                tabs: full
+                    ? _tabs
+                    : const [
+                        FossTab(
+                          value: 'two',
+                          label: 'Two',
+                          content: Text('PanelTwo'),
+                        ),
+                        FossTab(
+                          value: 'three',
+                          label: 'Three',
+                          content: Text('PanelThree'),
+                        ),
+                      ],
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      setOuter(() => full = false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('One'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('horizontal left arrow moves focus back', (tester) async {
+      String? picked;
+      await tester.pumpWidget(
+        host(
+          FossTabs<String>(
+            value: 'two',
+            onChanged: (v) => picked = v,
+            tabs: _tabs,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Two'));
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+
+      expect(picked, 'one');
+    });
+
+    testWidgets('RTL flips the horizontal arrows', (tester) async {
+      String? picked;
+      await tester.pumpWidget(
+        host(
+          Directionality(
+            textDirection: TextDirection.rtl,
+            child: FossTabs<String>(
+              value: 'two',
+              onChanged: (v) => picked = v,
+              tabs: _tabs,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Two'));
+      await tester.pumpAndSettle();
+
+      // Under RTL the right arrow steps toward the start (the first tab).
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+
+      expect(picked, 'one');
+    });
+
+    testWidgets('vertical underline navigates with up and down arrows', (
+      tester,
+    ) async {
+      String? picked;
+      await tester.pumpWidget(
+        host(
+          FossTabs<String>(
+            value: 'one',
+            onChanged: (v) => picked = v,
+            orientation: FossTabsOrientation.vertical,
+            variant: FossTabsVariant.underline,
+            tabs: _tabs,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('One'));
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(picked, 'two');
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(picked, 'one');
+    });
+
+    testWidgets('a tab renders its leading icon', (tester) async {
+      await tester.pumpWidget(
+        host(
+          const FossTabs<String>(
+            initialValue: 'one',
+            tabs: [
+              FossTab(
+                value: 'one',
+                label: 'One',
+                icon: SizedBox(key: Key('glyph'), width: 8, height: 8),
+                content: Text('PanelOne'),
+              ),
+              FossTab(value: 'two', label: 'Two', content: Text('PanelTwo')),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('glyph')), findsOneWidget);
+    });
+
+    testWidgets('hovering an underline tab tints it and clears on exit', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          const FossTabs<String>(
+            tabs: _tabs,
+            initialValue: 'one',
+            variant: FossTabsVariant.underline,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await gesture.addPointer(location: Offset.zero);
+      addTearDown(gesture.removePointer);
+
+      await gesture.moveTo(tester.getCenter(find.text('Two')));
+      await tester.pumpAndSettle();
+      await gesture.moveTo(Offset.zero);
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a style override drives the indicator color and shadow', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          const FossTabs<String>(
+            tabs: _tabs,
+            initialValue: 'one',
+            style: FossTabsStyle(
+              indicatorColor: Color(0xFF00FF00),
+              indicatorShadow: [
+                BoxShadow(color: Color(0x11000000), blurRadius: 2),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(_filled(const Color(0xFF00FF00)), findsWidgets);
     });
   });
 }

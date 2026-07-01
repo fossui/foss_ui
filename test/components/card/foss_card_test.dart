@@ -76,6 +76,17 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('the rim repaints when the card rebuilds', (tester) async {
+    // Rebuilding with new content but the same theme keeps the rim's color,
+    // radius, and lit edge equal, so shouldRepaint runs its full comparison.
+    for (final label in <String>['one', 'two']) {
+      await tester.pumpWidget(host(FossCard(content: Text(label))));
+    }
+
+    expect(find.text('two'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('lone content keeps the full inset on every side', (
     tester,
   ) async {

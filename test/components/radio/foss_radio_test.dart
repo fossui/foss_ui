@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foss_ui/foss_ui.dart';
 
@@ -294,6 +295,148 @@ void main() {
       );
 
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+    });
+  });
+
+  group('FossRadio focus', () {
+    testWidgets('keyboard focus paints the ring on the unchecked circle', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_group(onChanged: (_) {}));
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a focused invalid option paints the destructive ring', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _group(errorText: 'Required', onChanged: (_) {}),
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('space activates the focused option', (tester) async {
+      String? picked;
+      await tester.pumpWidget(_group(onChanged: (v) => picked = v));
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.space);
+      await tester.pump();
+
+      expect(picked, 'a');
+    });
+
+    testWidgets('the ring repaints when its color changes', (tester) async {
+      var error = false;
+      late StateSetter rebuild;
+      await tester.pumpWidget(
+        host(
+          StatefulBuilder(
+            builder: (context, setState) {
+              rebuild = setState;
+              return FossRadioGroup<String>(
+                errorText: error ? 'Required' : null,
+                onChanged: (_) {},
+                children: const [FossRadio(value: 'a', label: 'Apple')],
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      rebuild(() => error = true);
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('FossRadio rendering', () {
+    testWidgets('renders the description below the label', (tester) async {
+      await tester.pumpWidget(
+        host(
+          FossRadioGroup<String>(
+            onChanged: (_) {},
+            children: const [
+              FossRadio(
+                value: 'a',
+                label: 'Apple',
+                description: 'A crisp fruit',
+              ),
+            ],
+          ),
+        ),
+      );
+
+      expect(find.text('A crisp fruit'), findsOneWidget);
+    });
+
+    testWidgets('a per-instance style overrides the resolved visuals', (
+      tester,
+    ) async {
+      const style = FossRadioStyle(
+        backgroundColor: Color(0xFF102030),
+        checkedColor: Color(0xFF203040),
+        dotColor: Color(0xFF304050),
+        borderColor: Color(0xFF405060),
+        shadow: [],
+        circleSize: 22,
+        dotSize: 10,
+        gap: 12,
+        labelStyle: TextStyle(fontSize: 18, height: 1.2),
+        descriptionStyle: TextStyle(fontSize: 13, height: 1.2),
+      );
+      await tester.pumpWidget(
+        host(
+          FossRadioGroup<String>(
+            groupValue: 'a',
+            onChanged: (_) {},
+            children: [
+              FossRadio<String>(value: 'a', label: 'Apple', style: style),
+            ],
+          ),
+        ),
+      );
+
+      expect(_circle(tester, 'Apple').color, const Color(0xFF203040));
+      expect(tester.getSize(_circleOf('Apple').first).width, 22);
+    });
+
+    testWidgets('the resting rim repaints on a theme change', (tester) async {
+      var dark = false;
+      late StateSetter rebuild;
+      await tester.pumpWidget(
+        host(
+          StatefulBuilder(
+            builder: (context, setState) {
+              rebuild = setState;
+              return FossTheme(
+                data: dark ? FossThemeData.dark : FossThemeData.light,
+                child: FossRadioGroup<String>(
+                  onChanged: (_) {},
+                  children: const [FossRadio(value: 'a', label: 'Apple')],
+                ),
+              );
+            },
+          ),
+        ),
+      );
+
+      rebuild(() => dark = true);
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
     });
   });
 }

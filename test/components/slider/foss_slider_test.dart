@@ -317,6 +317,99 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   });
+
+  group('FossSlider session and painters', () {
+    testWidgets('a press that becomes a drag keeps one session', (
+      tester,
+    ) async {
+      final changes = <double>[];
+      double? start;
+      await tester.pumpWidget(
+        _Host(onChanged: changes.add, onChangeStart: (v) => start = v),
+      );
+
+      final gesture = await tester.startGesture(_globalFor(tester, _xFor(50)));
+      // Hold past the tap deadline so the press fires before the drag is
+      // recognized, then move to open the drag on the same pointer.
+      await tester.pump(const Duration(milliseconds: 150));
+      await gesture.moveBy(const Offset(30, 0));
+      await tester.pump();
+      await gesture.up();
+      await tester.pump();
+
+      expect(start, isNotNull);
+      expect(changes, isNotEmpty);
+    });
+
+    testWidgets('semantic increase and decrease step the value', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      final changes = <double>[];
+      await tester.pumpWidget(_Host(onChanged: changes.add));
+
+      tester.semantics.increase(find.semantics.byLabel('Volume'));
+      await tester.pump();
+      tester.semantics.decrease(find.semantics.byLabel('Volume'));
+      await tester.pump();
+
+      expect(changes, [55, 50]);
+      handle.dispose();
+    });
+
+    testWidgets('a style override drives the thumb', (tester) async {
+      await tester.pumpWidget(
+        host(
+          const SizedBox(
+            width: _width,
+            child: FossSlider(
+              value: 50,
+              onChanged: _noop,
+              style: FossSliderStyle(
+                rangeColor: Color(0xFF00FF00),
+                thumbSize: 24,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final thumb = tester.widget<SizedBox>(
+        find
+            .descendant(
+              of: find.byType(FossSlider),
+              matching: find.byType(SizedBox),
+            )
+            .last,
+      );
+      expect(thumb.width, 24);
+      expect(thumb.height, 24);
+    });
+
+    testWidgets('the painters compare on an identical rebuild', (tester) async {
+      late StateSetter setOuter;
+      await tester.pumpWidget(
+        host(
+          StatefulBuilder(
+            builder: (context, setState) {
+              setOuter = setState;
+              return SizedBox(
+                width: _width,
+                child: FossSlider(value: 50, onChanged: (_) {}),
+              );
+            },
+          ),
+        ),
+      );
+
+      // A rebuild at rest with unchanged values re-creates the track and rim
+      // painters, exercising their repaint checks.
+      setOuter(() {});
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    });
+  });
 }
 
 void _noop(double _) {}

@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +13,42 @@ const List<FossComboboxItem<String>> _items = [
   FossComboboxItem(value: 'b', label: 'Engineering'),
   FossComboboxItem(value: 'c', label: 'Product', enabled: false),
 ];
+
+const List<FossComboboxItem<String>> _iconItems = [
+  FossComboboxItem(
+    value: 'a',
+    label: 'Design',
+    icon: SizedBox.square(dimension: 12),
+  ),
+  FossComboboxItem(value: 'b', label: 'Engineering'),
+];
+
+/// Finds the trailing trigger by its painter, sidestepping the private type.
+Finder _byPainter(String type) => find.byWidgetPredicate(
+  (w) => w is CustomPaint && w.painter.runtimeType.toString() == type,
+);
+
+/// A themed host that anchors [child] to the bottom, leaving no room below so
+/// the popup flips above.
+Widget _bottomHost(Widget child) => FossTheme(
+  data: FossThemeData.light,
+  child: Directionality(
+    textDirection: TextDirection.ltr,
+    child: MediaQuery(
+      data: const MediaQueryData(size: Size(800, 600)),
+      child: Overlay(
+        initialEntries: [
+          OverlayEntry(
+            builder: (_) => Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(padding: const EdgeInsets.all(16), child: child),
+            ),
+          ),
+        ],
+      ),
+    ),
+  ),
+);
 
 void main() {
   group('FossAutocomplete', () {
@@ -83,6 +120,90 @@ void main() {
 
       expect(find.text('No items found.'), findsOneWidget);
     });
+
+    testWidgets('closes without animation when motion is reduced', (
+      tester,
+    ) async {
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
+      await tester.pumpWidget(
+        host(
+          FossAutocomplete(items: _fruits, focusNode: focus),
+          reduceMotion: true,
+        ),
+      );
+
+      focus.requestFocus();
+      await tester.pumpAndSettle();
+      expect(find.text('Apple'), findsOneWidget);
+
+      focus.unfocus();
+      await tester.pumpAndSettle();
+      expect(find.text('Apple'), findsNothing);
+    });
+
+    testWidgets('clear button empties the field', (tester) async {
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
+      await tester.pumpWidget(
+        host(
+          FossAutocomplete(items: _fruits, focusNode: focus, showClear: true),
+        ),
+      );
+
+      focus.requestFocus();
+      // Two edits so the trailing rebuilds and the clear painter repaints.
+      await tester.enterText(find.byType(EditableText), 'a');
+      await tester.pump();
+      await tester.enterText(find.byType(EditableText), 'ap');
+      await tester.pumpAndSettle();
+
+      await tester.tap(_byPainter('_CrossPainter'));
+      await tester.pump();
+
+      final editable = tester.widget<EditableText>(find.byType(EditableText));
+      expect(editable.controller.text, isEmpty);
+    });
+
+    testWidgets('renders at the large and small sizes', (tester) async {
+      await tester.pumpWidget(
+        host(FossAutocomplete(items: _fruits, size: FossTextFieldSize.lg)),
+      );
+      expect(find.byType(EditableText), findsOneWidget);
+
+      await tester.pumpWidget(
+        host(FossAutocomplete(items: _fruits, size: FossTextFieldSize.sm)),
+      );
+      expect(find.byType(EditableText), findsOneWidget);
+    });
+
+    testWidgets('applies a style override', (tester) async {
+      await tester.pumpWidget(
+        host(
+          FossAutocomplete(
+            items: _fruits,
+            style: const FossComboboxStyle(
+              borderRadius: 12,
+              textStyle: TextStyle(fontSize: 20),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(EditableText), findsOneWidget);
+    });
+
+    testWidgets('an empty style falls back to the resolved visuals', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          FossAutocomplete(items: _fruits, style: const FossComboboxStyle()),
+        ),
+      );
+
+      expect(find.byType(EditableText), findsOneWidget);
+    });
   });
 
   group('FossCombobox', () {
@@ -153,6 +274,142 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Design'), findsNothing);
+    });
+
+    testWidgets('clear button reports null and empties the field', (
+      tester,
+    ) async {
+      String? picked = 'seed';
+      await tester.pumpWidget(
+        host(
+          FossCombobox<String>(
+            value: 'b',
+            items: _items,
+            showClear: true,
+            onSelected: (v) => picked = v,
+          ),
+        ),
+      );
+
+      final editable = tester.widget<EditableText>(find.byType(EditableText));
+      expect(editable.controller.text, 'Engineering');
+
+      await tester.tap(_byPainter('_CrossPainter'));
+      await tester.pump();
+
+      expect(picked, isNull);
+      expect(editable.controller.text, isEmpty);
+    });
+
+    testWidgets('the trigger opens then closes the popup', (tester) async {
+      await tester.pumpWidget(
+        host(FossCombobox<String>(items: _items, onSelected: (_) {})),
+      );
+
+      await tester.tap(_byPainter('_ChevronPainter'));
+      await tester.pumpAndSettle();
+      expect(find.text('Design'), findsOneWidget);
+
+      await tester.tap(_byPainter('_ChevronPainter'));
+      await tester.pumpAndSettle();
+      expect(find.text('Design'), findsNothing);
+    });
+
+    testWidgets('arrow up navigates and escape closes then is ignored', (
+      tester,
+    ) async {
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
+      await tester.pumpWidget(
+        host(
+          FossCombobox<String>(
+            items: _items,
+            focusNode: focus,
+            onSelected: (_) {},
+          ),
+        ),
+      );
+
+      focus.requestFocus();
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.text('Design'), findsNothing);
+
+      // Escape again while closed but still focused is a no-op.
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+      expect(find.text('Design'), findsNothing);
+    });
+
+    testWidgets('hovering an unhighlighted row moves the highlight', (
+      tester,
+    ) async {
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
+      await tester.pumpWidget(
+        host(
+          FossCombobox<String>(
+            items: _items,
+            focusNode: focus,
+            onSelected: (_) {},
+          ),
+        ),
+      );
+
+      focus.requestFocus();
+      await tester.pumpAndSettle();
+
+      final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await gesture.addPointer(location: Offset.zero);
+      addTearDown(gesture.removePointer);
+      await gesture.moveTo(tester.getCenter(find.text('Engineering').last));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Engineering'), findsWidgets);
+    });
+
+    testWidgets('renders leading row icons', (tester) async {
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
+      await tester.pumpWidget(
+        host(
+          FossCombobox<String>(
+            items: _iconItems,
+            focusNode: focus,
+            onSelected: (_) {},
+          ),
+        ),
+      );
+
+      focus.requestFocus();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Design'), findsOneWidget);
+    });
+
+    testWidgets('flips the popup above when there is no room below', (
+      tester,
+    ) async {
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
+      await tester.pumpWidget(
+        _bottomHost(
+          FossCombobox<String>(
+            items: _items,
+            focusNode: focus,
+            onSelected: (_) {},
+          ),
+        ),
+      );
+
+      focus.requestFocus();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Design'), findsOneWidget);
     });
   });
 
@@ -274,14 +531,240 @@ void main() {
 
       expect(find.text('Engineering'), findsNothing);
     });
+
+    testWidgets('typing filters and then shows the empty state', (
+      tester,
+    ) async {
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
+      await tester.pumpWidget(
+        host(_MultiHost(items: _items, focusNode: focus)),
+      );
+
+      await tester.tap(find.byType(EditableText));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(EditableText), 'Eng');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Engineering'), findsOneWidget);
+      expect(find.text('Design'), findsNothing);
+
+      await tester.enterText(find.byType(EditableText), 'zzz');
+      await tester.pumpAndSettle();
+
+      expect(find.text('No items found.'), findsOneWidget);
+    });
+
+    testWidgets('shows the placeholder while empty', (tester) async {
+      await tester.pumpWidget(
+        host(_MultiHost(items: _items, hintText: 'Add tags')),
+      );
+
+      expect(find.text('Add tags'), findsOneWidget);
+    });
+
+    testWidgets('renders the label, start addon, and focused error', (
+      tester,
+    ) async {
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
+      await tester.pumpWidget(
+        host(
+          _MultiHost(
+            items: _items,
+            focusNode: focus,
+            label: 'Tags',
+            errorText: 'Required',
+            startAddon: const SizedBox.square(dimension: 12),
+          ),
+        ),
+      );
+
+      expect(find.text('Tags'), findsOneWidget);
+      expect(find.text('Required'), findsOneWidget);
+
+      focus.requestFocus();
+      await tester.pumpAndSettle();
+      expect(find.text('Required'), findsOneWidget);
+    });
+
+    testWidgets('renders large size on a dark theme', (tester) async {
+      await tester.pumpWidget(
+        host(
+          _MultiHost(items: _items, size: FossTextFieldSize.lg),
+          theme: FossThemeData.dark,
+        ),
+      );
+      expect(find.byType(EditableText), findsOneWidget);
+
+      await tester.pumpWidget(
+        host(_MultiHost(items: _items, size: FossTextFieldSize.sm)),
+      );
+      expect(find.byType(EditableText), findsOneWidget);
+    });
+
+    testWidgets('selects several chips and removes one with its button', (
+      tester,
+    ) async {
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
+      await tester.pumpWidget(
+        host(_MultiHost(items: _items, focusNode: focus)),
+      );
+
+      await tester.tap(find.byType(EditableText));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Design').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Engineering').last);
+      await tester.pumpAndSettle();
+
+      // Each chip carries one remove cross.
+      expect(_byPainter('_CrossPainter'), findsNWidgets(2));
+
+      await tester.tap(_byPainter('_CrossPainter').first);
+      await tester.pumpAndSettle();
+
+      expect(_byPainter('_CrossPainter'), findsOneWidget);
+    });
+
+    testWidgets('backspace removes the last chip and is a no-op when empty', (
+      tester,
+    ) async {
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
+      await tester.pumpWidget(
+        host(_MultiHost(items: _items, focusNode: focus)),
+      );
+
+      await tester.tap(find.byType(EditableText));
+      await tester.pumpAndSettle();
+
+      // No chips yet: backspace does nothing.
+      await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+      await tester.pump();
+      expect(_byPainter('_CrossPainter'), findsNothing);
+
+      await tester.tap(find.text('Design').last);
+      await tester.pumpAndSettle();
+      expect(_byPainter('_CrossPainter'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+      await tester.pumpAndSettle();
+      expect(_byPainter('_CrossPainter'), findsNothing);
+    });
+
+    testWidgets('keyboard navigates and Enter picks the highlighted row', (
+      tester,
+    ) async {
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
+      await tester.pumpWidget(
+        host(_MultiHost(items: _items, focusNode: focus)),
+      );
+
+      await tester.tap(find.byType(EditableText));
+      await tester.pumpAndSettle();
+
+      // Filter to a single match, then submit to pick the highlighted row.
+      await tester.enterText(find.byType(EditableText), 'Eng');
+      await tester.pumpAndSettle();
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(_byPainter('_CrossPainter'), findsWidgets);
+
+      // The pick clears the query, so the full list is shown again to navigate.
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.text('Design'), findsNothing);
+    });
+
+    testWidgets('blur closes the popup with animation', (tester) async {
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
+      await tester.pumpWidget(
+        host(_MultiHost(items: _items, focusNode: focus)),
+      );
+
+      focus.requestFocus();
+      await tester.pumpAndSettle();
+      expect(find.text('Design'), findsOneWidget);
+
+      focus.unfocus();
+      await tester.pumpAndSettle();
+      expect(find.text('Design'), findsNothing);
+    });
+
+    testWidgets('blur closes without animation when motion is reduced', (
+      tester,
+    ) async {
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
+      await tester.pumpWidget(
+        host(
+          _MultiHost(items: _items, focusNode: focus),
+          reduceMotion: true,
+        ),
+      );
+
+      focus.requestFocus();
+      await tester.pumpAndSettle();
+      expect(find.text('Design'), findsOneWidget);
+
+      focus.unfocus();
+      await tester.pumpAndSettle();
+      expect(find.text('Design'), findsNothing);
+    });
+
+    testWidgets('hovering a row repaints the selected check', (tester) async {
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
+      await tester.pumpWidget(
+        host(_MultiHost(items: _items, focusNode: focus)),
+      );
+
+      await tester.tap(find.byType(EditableText));
+      await tester.pumpAndSettle();
+      // Select Design so its row shows a check, then hover another row to
+      // force that row (and its check) to rebuild.
+      await tester.tap(find.text('Design').last);
+      await tester.pumpAndSettle();
+
+      final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await gesture.addPointer(location: Offset.zero);
+      addTearDown(gesture.removePointer);
+      await gesture.moveTo(tester.getCenter(find.text('Engineering').last));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Engineering'), findsWidgets);
+    });
   });
 }
 
 /// A stateful wrapper so the controlled [FossMultiCombobox] value updates.
 class _MultiHost extends StatefulWidget {
-  const _MultiHost({required this.items});
+  const _MultiHost({
+    required this.items,
+    this.focusNode,
+    this.label,
+    this.hintText,
+    this.errorText,
+    this.startAddon,
+    this.size = FossTextFieldSize.md,
+  });
 
   final List<FossComboboxItem<String>> items;
+  final FocusNode? focusNode;
+  final String? label;
+  final String? hintText;
+  final String? errorText;
+  final Widget? startAddon;
+  final FossTextFieldSize size;
 
   @override
   State<_MultiHost> createState() => _MultiHostState();
@@ -294,6 +777,12 @@ class _MultiHostState extends State<_MultiHost> {
   Widget build(BuildContext context) => FossMultiCombobox<String>(
     items: widget.items,
     values: _values,
+    focusNode: widget.focusNode,
+    label: widget.label,
+    hintText: widget.hintText,
+    errorText: widget.errorText,
+    startAddon: widget.startAddon,
+    size: widget.size,
     onSelected: (v) => setState(() => _values = v),
   );
 }

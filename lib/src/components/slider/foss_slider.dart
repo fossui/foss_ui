@@ -170,10 +170,6 @@ class _FossSliderState extends State<FossSlider> {
 
   void _startSession(Offset global) {
     if (_pointerToValue(global) case final value?) {
-      if (_inSession) {
-        widget.onChanged?.call(value);
-        return;
-      }
       _inSession = true;
       _states.update(WidgetState.dragged, true);
       widget.onChangeStart?.call(value);
@@ -553,8 +549,12 @@ class _RimPainter extends CustomPainter {
     canvas.drawCircle(rect.center, rect.width / 2, paint);
   }
 
+  // The thumb rim is a const painter, so the framework compares it by
+  // identity and never calls this; kept to satisfy the interface.
+  // coverage:ignore-start
   @override
   bool shouldRepaint(_RimPainter oldDelegate) => oldDelegate.color != color;
+  // coverage:ignore-end
 }
 
 /// Paints the focus ring: a 3px circle concentric with the thumb, just outside

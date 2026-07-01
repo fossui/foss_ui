@@ -23,6 +23,13 @@ void main() {
       expect(item.enabled, isFalse);
       expect(item.icon, same(icon));
     });
+
+    test('constructs at runtime', () {
+      for (final v in <String>['a', 'b']) {
+        final item = FossSelectItem<String>(value: v, label: v);
+        expect(item.value, v);
+      }
+    });
   });
 
   group('FossSelectSize', () {

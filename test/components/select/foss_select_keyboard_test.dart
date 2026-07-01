@@ -51,6 +51,51 @@ void main() {
       expect(picked, 'c');
     });
 
+    testWidgets('arrow up wraps the highlight to the last row', (tester) async {
+      String? picked;
+      await tester.pumpWidget(host(_select((v) => picked = v)));
+
+      await tester.tap(find.text('Pick'));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+
+      expect(picked, 'c', reason: 'up from Apple wraps to Cherry');
+    });
+
+    testWidgets('type-ahead extends the query within the window', (
+      tester,
+    ) async {
+      String? picked;
+      await tester.pumpWidget(host(_select((v) => picked = v)));
+
+      await tester.tap(find.text('Pick'));
+      await tester.pumpAndSettle();
+      // 'b' then 'a' in quick succession matches "ba" (Banana); a reset would
+      // leave "a" and jump to Apple instead.
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyB);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+
+      expect(picked, 'b');
+    });
+
+    testWidgets('activating the focused trigger opens the popup', (
+      tester,
+    ) async {
+      await tester.pumpWidget(host(_select((_) {})));
+
+      final context = tester.element(find.byType(GestureDetector));
+      Actions.invoke(context, const ActivateIntent());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Banana'), findsOneWidget);
+    });
+
     testWidgets('escape closes the popup', (tester) async {
       await tester.pumpWidget(host(_select((_) {})));
 

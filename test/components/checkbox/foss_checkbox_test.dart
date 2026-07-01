@@ -1,4 +1,6 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foss_ui/foss_ui.dart';
 
@@ -192,6 +194,51 @@ void main() {
         (banana.shape as RoundedSuperellipseBorder).side.color,
         colors.input,
       );
+    });
+  });
+
+  group('FossCheckboxGroup updates', () {
+    testWidgets('rebuilding with a new set re-renders the options', (
+      tester,
+    ) async {
+      var values = <String>{};
+      late StateSetter rebuild;
+      await tester.pumpWidget(
+        host(
+          StatefulBuilder(
+            builder: (context, setState) {
+              rebuild = setState;
+              return FossCheckboxGroup<String>(
+                values: values,
+                onChanged: (_) {},
+                children: [
+                  FossCheckboxItem<String>(value: 'a', label: 'Apple'),
+                ],
+              );
+            },
+          ),
+        ),
+      );
+
+      expect(
+        _box(tester, find.byType(FossCheckboxItem<String>)).color,
+        colors.background,
+      );
+
+      rebuild(() => values = {'a'});
+      await tester.pump();
+
+      expect(
+        _box(tester, find.byType(FossCheckboxItem<String>)).color,
+        colors.primary,
+      );
+
+      // A rebuild that keeps the set equal falls through to the later scope
+      // clauses (the inline callback differs each build).
+      rebuild(() {});
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
     });
   });
 
@@ -410,6 +457,205 @@ void main() {
     testWidgets('meets the minimum tap target', (tester) async {
       await tester.pumpWidget(host(const FossCheckbox(label: 'Terms')));
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+    });
+  });
+
+  group('FossCheckbox focus', () {
+    testWidgets('keyboard focus paints the ring on the unchecked box', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(FossCheckbox(label: 'Terms', onChanged: (_) {})),
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a focused invalid box paints the destructive ring', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          FossCheckbox(
+            label: 'Terms',
+            errorText: 'Required',
+            onChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('space activates the focused box', (tester) async {
+      bool? next;
+      await tester.pumpWidget(
+        host(FossCheckbox(label: 'Terms', onChanged: (v) => next = v)),
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.space);
+      await tester.pump();
+
+      expect(next, isTrue);
+    });
+
+    testWidgets('the focused ring repaints on a theme change', (tester) async {
+      var dark = false;
+      late StateSetter rebuild;
+      await tester.pumpWidget(
+        host(
+          StatefulBuilder(
+            builder: (context, setState) {
+              rebuild = setState;
+              return FossTheme(
+                data: dark ? FossThemeData.dark : FossThemeData.light,
+                child: FossCheckbox(label: 'Terms', onChanged: (_) {}),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      rebuild(() => dark = true);
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('hovering a card option tints its surface', (tester) async {
+      // The hover highlight only shows in the pointer (traditional) mode, so
+      // force it before moving the mouse over the card.
+      final previous = FocusManager.instance.highlightStrategy;
+      FocusManager.instance.highlightStrategy =
+          FocusHighlightStrategy.alwaysTraditional;
+      addTearDown(
+        () => FocusManager.instance.highlightStrategy = previous,
+      );
+
+      await tester.pumpWidget(
+        _group(
+          variant: FossCheckboxGroupVariant.card,
+          onChanged: (_) {},
+        ),
+      );
+
+      final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      addTearDown(gesture.removePointer);
+      await gesture.addPointer(location: Offset.zero);
+      await tester.pump();
+      await gesture.moveTo(
+        tester.getCenter(find.byType(FossCheckboxItem<String>).first),
+      );
+      await tester.pumpAndSettle();
+
+      final card = _decoration(
+        tester,
+        _boxesOf(find.byType(FossCheckboxItem<String>).first).first,
+      );
+      expect(
+        card.color,
+        colors.accent.withValues(alpha: colors.accent.a * 0.5),
+      );
+    });
+  });
+
+  group('FossCheckbox rendering', () {
+    testWidgets('renders the description below the label', (tester) async {
+      await tester.pumpWidget(
+        host(
+          const FossCheckbox(label: 'Terms', description: 'Read them first'),
+        ),
+      );
+
+      expect(find.text('Read them first'), findsOneWidget);
+    });
+
+    testWidgets('a per-instance style overrides the resolved visuals', (
+      tester,
+    ) async {
+      const style = FossCheckboxStyle(
+        backgroundColor: Color(0xFF102030),
+        checkedColor: Color(0xFF203040),
+        checkColor: Color(0xFF304050),
+        borderColor: Color(0xFF405060),
+        shadow: [],
+        boxSize: 22,
+        glyphSize: 16,
+        gap: 12,
+        labelStyle: TextStyle(fontSize: 18, height: 1.2),
+        descriptionStyle: TextStyle(fontSize: 13, height: 1.2),
+      );
+      await tester.pumpWidget(
+        host(
+          const FossCheckbox(value: true, label: 'Terms', style: style),
+        ),
+      );
+
+      expect(
+        _box(tester, find.byType(FossCheckbox)).color,
+        const Color(0xFF203040),
+      );
+      expect(
+        tester.getSize(_boxesOf(find.byType(FossCheckbox)).last).width,
+        22,
+      );
+    });
+
+    testWidgets('the glyph repaints when its color changes', (tester) async {
+      await tester.pumpWidget(
+        host(
+          const FossCheckbox(
+            value: true,
+            label: 'Terms',
+            style: FossCheckboxStyle(checkColor: Color(0xFF111111)),
+          ),
+        ),
+      );
+
+      await tester.pumpWidget(
+        host(
+          const FossCheckbox(
+            value: true,
+            label: 'Terms',
+            style: FossCheckboxStyle(checkColor: Color(0xFF222222)),
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the resting rim repaints on a theme change', (tester) async {
+      var dark = false;
+      late StateSetter rebuild;
+      await tester.pumpWidget(
+        host(
+          StatefulBuilder(
+            builder: (context, setState) {
+              rebuild = setState;
+              return FossTheme(
+                data: dark ? FossThemeData.dark : FossThemeData.light,
+                child: const FossCheckbox(label: 'Terms'),
+              );
+            },
+          ),
+        ),
+      );
+
+      rebuild(() => dark = true);
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
     });
   });
 }

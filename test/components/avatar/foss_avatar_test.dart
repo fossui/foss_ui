@@ -165,6 +165,17 @@ void main() {
       );
       expect(find.text('VL'), findsOneWidget);
     });
+
+    testWidgets('a failed image degrades to the fallback', (tester) async {
+      await tester.pumpWidget(
+        host(FossAvatar(image: _ErrorImage(), fallback: const Text('VL'))),
+      );
+      await tester.pump();
+      await tester.pump();
+      tester.takeException(); // the decode error is swallowed by errorBuilder
+
+      expect(find.text('VL'), findsOneWidget);
+    });
   });
 
   group('accessibility', () {
@@ -236,6 +247,22 @@ class _PendingImage extends ImageProvider<_PendingImage> {
     ImageDecoderCallback decode,
   ) => MultiFrameImageStreamCompleter(
     codec: Completer<Codec>().future,
+    scale: 1,
+  );
+}
+
+// An image provider whose decode fails, so the Image falls to its errorBuilder.
+class _ErrorImage extends ImageProvider<_ErrorImage> {
+  @override
+  Future<_ErrorImage> obtainKey(ImageConfiguration configuration) =>
+      SynchronousFuture(this);
+
+  @override
+  ImageStreamCompleter loadImage(
+    _ErrorImage key,
+    ImageDecoderCallback decode,
+  ) => MultiFrameImageStreamCompleter(
+    codec: Future<Codec>.error(Exception('decode failed')),
     scale: 1,
   );
 }

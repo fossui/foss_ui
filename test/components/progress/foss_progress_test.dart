@@ -99,6 +99,14 @@ void main() {
       expect(fillFactor(tester), 0);
     });
 
+    testWidgets('constructs from a runtime value', (tester) async {
+      for (final v in <double>[0, 0.5, 1]) {
+        await tester.pumpWidget(host(FossProgress(value: v)));
+        await tester.pumpAndSettle();
+      }
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('animates toward a new value over the motion duration', (
       tester,
     ) async {

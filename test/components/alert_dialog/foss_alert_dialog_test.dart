@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foss_ui/foss_ui.dart';
@@ -56,10 +58,81 @@ void main() {
     expect(await pending, isTrue);
   });
 
+  testWidgets('renders body, description, and honors a style width', (
+    tester,
+  ) async {
+    late BuildContext ctx;
+    await tester.pumpWidget(
+      host(
+        Builder(
+          builder: (context) {
+            ctx = context;
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+
+    unawaited(
+      showFossAlertDialog<void>(
+        context: ctx,
+        builder: (context) => FossAlertDialog(
+          title: const Text('Session expired'),
+          description: const Text('Sign in again to continue.'),
+          content: const Text('Your token lapsed.'),
+          style: const FossAlertDialogStyle(maxWidth: 360),
+          actions: [
+            GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: const Text('Sign in'),
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Session expired'), findsOneWidget);
+    expect(find.text('Sign in again to continue.'), findsOneWidget);
+    expect(find.text('Your token lapsed.'), findsOneWidget);
+  });
+
   testWidgets('asserts on empty actions', (tester) async {
     expect(
       () => FossAlertDialog(actions: const [], title: const Text('x')),
       throwsAssertionError,
     );
+  });
+
+  group('FossAlertDialogStyle.merge', () {
+    test('lays every non-null field of other over this', () {
+      const base = FossAlertDialogStyle(
+        backgroundColor: Color(0xFF111111),
+        borderColor: Color(0xFF222222),
+        borderRadius: 8,
+        maxWidth: 320,
+        titleStyle: TextStyle(fontSize: 10),
+        descriptionStyle: TextStyle(fontSize: 11),
+      );
+      const over = FossAlertDialogStyle(
+        maxWidth: 480,
+        shadows: [BoxShadow(blurRadius: 4)],
+      );
+
+      final merged = base.merge(over);
+
+      expect(merged.backgroundColor, const Color(0xFF111111));
+      expect(merged.borderColor, const Color(0xFF222222));
+      expect(merged.borderRadius, 8);
+      expect(merged.maxWidth, 480);
+      expect(merged.shadows, const [BoxShadow(blurRadius: 4)]);
+      expect(merged.titleStyle, const TextStyle(fontSize: 10));
+      expect(merged.descriptionStyle, const TextStyle(fontSize: 11));
+    });
+
+    test('merge(null) returns this', () {
+      const base = FossAlertDialogStyle(maxWidth: 320);
+      expect(base.merge(null), same(base));
+    });
   });
 }

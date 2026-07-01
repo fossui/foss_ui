@@ -124,5 +124,19 @@ void main() {
       );
       expect(tester.getSize(find.byType(FossSeparator)), const Size(200, 1));
     });
+
+    testWidgets('constructs at runtime for each orientation', (tester) async {
+      for (final orientation in FossSeparatorOrientation.values) {
+        await tester.pumpWidget(
+          host(
+            SizedBox.square(
+              dimension: 20,
+              child: FossSeparator(orientation: orientation),
+            ),
+          ),
+        );
+        expect(tester.takeException(), isNull);
+      }
+    });
   });
 }

@@ -15,6 +15,21 @@ void main() {
         .widgetList<ConstrainedBox>(find.byType(ConstrainedBox))
         .any((b) => b.constraints.minHeight == height);
 
+    testWidgets('sm resolves the trigger to a 32 minimum height', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          const FossSelect<String>(
+            placeholder: 'Pick',
+            size: FossSelectSize.sm,
+            items: _items,
+          ),
+        ),
+      );
+      expect(hasMinHeight(tester, 32), isTrue);
+    });
+
     testWidgets('md resolves the trigger to a 36 minimum height', (
       tester,
     ) async {
