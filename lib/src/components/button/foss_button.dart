@@ -387,8 +387,16 @@ extension on FossButtonVariant {
       this == FossButtonVariant.destructive;
 }
 
-/// Composites [base] at [opacity] of its own alpha over [surface], baking the
-/// translucent hover and pressed steps to opaque colors at resolve time.
+/// Scales [color] to [opacity] of its own alpha, keeping it translucent so it
+/// composites over whatever surface the button sits on at paint time. A fill
+/// that stays translucent blends on the popover of a dialog or the fill of a
+/// card, not just the app background.
+Color _alpha(Color color, double opacity) =>
+    color.withValues(alpha: color.a * opacity);
+
+/// Composites [base] at [opacity] of its own alpha over a fixed [surface],
+/// baking an opaque color at resolve time. Used only where the fill is already
+/// opaque against a known surface.
 Color _overlay(Color base, double opacity, Color surface) =>
     Color.alphaBlend(base.withValues(alpha: base.a * opacity), surface);
 
@@ -413,7 +421,6 @@ _ButtonVisuals _resolve(
   required bool iconOnly,
 }) {
   final c = theme.colors;
-  final surface = c.background;
 
   final Color base;
   final Color hover;
@@ -423,14 +430,14 @@ _ButtonVisuals _resolve(
   switch (variant) {
     case FossButtonVariant.primary:
       base = c.primary;
-      hover = _overlay(c.primary, 0.9, surface);
+      hover = _alpha(c.primary, 0.9);
       pressed = hover;
       fg = c.primaryForeground;
       side = BorderSide(color: c.primary);
     case FossButtonVariant.secondary:
       base = c.secondary;
-      hover = _overlay(c.secondary, 0.9, surface);
-      pressed = _overlay(c.secondary, 0.8, surface);
+      hover = _alpha(c.secondary, 0.9);
+      pressed = _alpha(c.secondary, 0.8);
       fg = c.secondaryForeground;
       side = BorderSide.none;
     case FossButtonVariant.outline:
@@ -441,13 +448,13 @@ _ButtonVisuals _resolve(
       side = BorderSide(color: c.input);
     case FossButtonVariant.ghost:
       base = const Color(0x00000000);
-      hover = _overlay(c.accent, 1, surface);
+      hover = c.accent;
       pressed = hover;
       fg = c.foreground;
       side = BorderSide.none;
     case FossButtonVariant.destructive:
       base = c.destructive;
-      hover = _overlay(c.destructive, 0.9, surface);
+      hover = _alpha(c.destructive, 0.9);
       pressed = hover;
       fg = c.destructiveForegroundOn;
       side = BorderSide(color: c.destructive);
