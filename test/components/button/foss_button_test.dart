@@ -90,6 +90,32 @@ void main() {
 
       expect(_decoration(tester).color, const Color(0x00000000));
     });
+
+    testWidgets('secondary pressed stays translucent so it blends on any '
+        'surface', (tester) async {
+      await tester.pumpWidget(
+        host(
+          FossButton(
+            onPressed: () {},
+            variant: FossButtonVariant.secondary,
+            child: const Text('Go'),
+          ),
+        ),
+      );
+
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byType(FossButton)),
+      );
+      addTearDown(gesture.up);
+      await tester.pump();
+
+      final secondary = FossColors.light.secondary;
+      final pressed = _decoration(tester).color;
+      // A fill flattened onto a fixed surface reads as opaque and mismatches a
+      // dialog popover; the tint must keep its alpha to composite live.
+      expect(pressed?.a ?? 1.0, lessThan(1.0));
+      expect(pressed, secondary.withValues(alpha: secondary.a * 0.8));
+    });
   });
 
   group('FossButton sizing', () {
