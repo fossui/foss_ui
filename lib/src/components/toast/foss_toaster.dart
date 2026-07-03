@@ -1,11 +1,11 @@
 import 'package:flutter/widgets.dart';
-import 'package:foss_ui/src/components/spinner/foss_spinner.dart';
-import 'package:foss_ui/src/components/toast/foss_toast.dart';
-import 'package:foss_ui/src/components/toast/foss_toast_controller.dart';
-import 'package:foss_ui/src/foundation/foss_glyphs.dart';
-import 'package:foss_ui/src/theme/colors/foss_colors.dart';
-import 'package:foss_ui/src/theme/foss_theme.dart';
-import 'package:foss_ui/src/theme/typography/foss_typography.dart';
+import 'package:fossui/src/components/spinner/foss_spinner.dart';
+import 'package:fossui/src/components/toast/foss_toast.dart';
+import 'package:fossui/src/components/toast/foss_toast_controller.dart';
+import 'package:fossui/src/foundation/foss_glyphs.dart';
+import 'package:fossui/src/theme/colors/foss_colors.dart';
+import 'package:fossui/src/theme/foss_theme.dart';
+import 'package:fossui/src/theme/typography/foss_typography.dart';
 
 /// Maximum width of a toast surface in logical pixels (coss `max-w-90`).
 const double _maxWidth = 360;

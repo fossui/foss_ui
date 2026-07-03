@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart' show TextInputAction, TextInputType;
 import 'package:flutter/widgets.dart';
-import 'package:foss_ui/src/theme/theme.dart';
+import 'package:fossui/src/theme/theme.dart';
 
 part 'foss_text_field_style.dart';
 
@@ -49,7 +49,7 @@ enum FossTextFieldSize {
   lg,
 }
 
-/// A text field in the foss_ui style.
+/// A text field in the fossui style.
 ///
 /// Pairs an editable box with an optional [label] above and a [helperText] or
 /// [errorText] caption below. Colors, radius, type, and spacing come from

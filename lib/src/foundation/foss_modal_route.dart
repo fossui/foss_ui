@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
-import 'package:foss_ui/src/theme/foss_theme.dart';
-import 'package:foss_ui/src/theme/motion/foss_motion.dart';
+import 'package:fossui/src/theme/foss_theme.dart';
+import 'package:fossui/src/theme/motion/foss_motion.dart';
 
 /// The scrim behind a modal overlay: black at 32% opacity (alpha 0x52).
 const _scrim = Color(0x52000000);

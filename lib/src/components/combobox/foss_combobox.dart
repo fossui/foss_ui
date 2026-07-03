@@ -3,8 +3,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:foss_ui/src/components/text_field/foss_text_field.dart';
-import 'package:foss_ui/src/theme/theme.dart';
+import 'package:fossui/src/components/text_field/foss_text_field.dart';
+import 'package:fossui/src/theme/theme.dart';
 
 part '_foss_combobox_field.dart';
 part '_foss_multi_combobox_field.dart';

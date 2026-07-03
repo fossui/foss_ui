@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
-import 'package:foss_ui/src/components/toast/foss_toast.dart';
+import 'package:fossui/src/components/toast/foss_toast.dart';
 
 /// A live toast in a [FossToastController]'s queue.
 class FossToastEntry {

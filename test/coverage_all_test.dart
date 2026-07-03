@@ -5,7 +5,7 @@
 // barrel does not export (and nothing exported imports) must be added here, or
 // carry its own test, to stay visible.
 import 'package:flutter_test/flutter_test.dart';
-import 'package:foss_ui/foss_ui.dart';
+import 'package:fossui/fossui.dart';
 
 void main() {
   test('public surface is reachable for coverage', () {

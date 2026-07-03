@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:foss_ui/src/theme/theme.dart';
+import 'package:fossui/src/theme/theme.dart';
 
 part 'foss_radio_group.dart';
 part 'foss_radio_style.dart';

@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:foss_ui/foss_ui.dart';
+import 'package:fossui/fossui.dart';
 
 /// Wraps [child] in a [FossTheme] for [data] on a neutral themed surface, the
 /// standard cell body for a golden scenario.

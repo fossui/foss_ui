@@ -1,4 +1,4 @@
-# foss_ui
+# fossui
 
 An open-source Flutter UI library. Unofficial port inspired by
 [coss.com/ui](https://coss.com/ui) (the Cal.com design system), reimplemented
@@ -13,13 +13,13 @@ with Flutter-native theming and golden-tested widgets.
 
 ```yaml
 dependencies:
-  foss_ui: ^0.0.1
+  fossui: ^0.0.1
 ```
 
 ## Usage
 
 ```dart
-import 'package:foss_ui/foss_ui.dart';
+import 'package:fossui/fossui.dart';
 ```
 
 Components and theming are added in tiers. See the
@@ -39,11 +39,11 @@ fvm flutter test
 
 ## Star history
 
-<a href="https://star-history.com/#narayann7/foss_ui&Date">
+<a href="https://star-history.com/#fossui/fossui&Date">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=narayann7/foss_ui&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=narayann7/foss_ui&type=Date" />
-    <img alt="Star history chart for foss_ui" src="https://api.star-history.com/svg?repos=narayann7/foss_ui&type=Date" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=fossui/fossui&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=fossui/fossui&type=Date" />
+    <img alt="Star history chart for fossui" src="https://api.star-history.com/svg?repos=fossui/fossui&type=Date" />
   </picture>
 </a>
 

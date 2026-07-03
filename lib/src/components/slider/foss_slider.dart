@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:foss_ui/src/theme/theme.dart';
+import 'package:fossui/src/theme/theme.dart';
 
 part 'foss_slider_style.dart';
 

@@ -1,4 +1,4 @@
-/// foss_ui: an open-source Flutter UI library.
+/// fossui: an open-source Flutter UI library.
 ///
 /// A single import for the theme system and widgets. Native Flutter theming,
 /// golden-tested components.

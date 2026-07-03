@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
-import 'package:foss_ui/src/theme/theme.dart';
+import 'package:fossui/src/theme/theme.dart';
 
 /// A circular loading indicator: an open arc that spins continuously.
 ///

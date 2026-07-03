@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:foss_ui/src/theme/foss_theme.dart';
+import 'package:fossui/src/theme/foss_theme.dart';
 
 /// The footer treatment shared by the dialog and the alert dialog.
 enum FossDialogFooterVariant {

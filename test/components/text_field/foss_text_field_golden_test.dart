@@ -8,7 +8,7 @@ library;
 import 'package:alchemist/alchemist.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:foss_ui/foss_ui.dart';
+import 'package:fossui/fossui.dart';
 
 import '../../support/golden_matrix.dart';
 

@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:foss_ui/foss_ui.dart';
+import 'package:fossui/fossui.dart';
 
 /// Wraps [child] in a themed app with an [Overlay] so the select popup can
 /// mount. Mirrors the harness the other overlay components test against.

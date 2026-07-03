@@ -1,11 +1,11 @@
-name: foss_ui
+name: fossui
 description: >-
   An open-source Flutter UI library. Unofficial port inspired by coss.com/ui,
   built on Flutter-native theming and golden-tested widgets.
 version: 0.0.1
-homepage: https://narayann.dev
-repository: https://github.com/narayann7/foss_ui
-issue_tracker: https://github.com/narayann7/foss_ui/issues
+homepage: https://fossui.org
+repository: https://github.com/fossui/fossui
+issue_tracker: https://github.com/fossui/fossui/issues
 
 environment:
   sdk: ^3.11.5

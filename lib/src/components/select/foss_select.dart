@@ -4,7 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/semantics.dart' show SemanticsRole;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:foss_ui/src/theme/theme.dart';
+import 'package:fossui/src/theme/theme.dart';
 
 part '_foss_select_listbox.dart';
 part 'foss_multi_select.dart';

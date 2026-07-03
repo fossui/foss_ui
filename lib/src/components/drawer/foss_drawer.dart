@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
-import 'package:foss_ui/src/foundation/foss_glyphs.dart';
-import 'package:foss_ui/src/foundation/foss_modal_route.dart';
-import 'package:foss_ui/src/theme/colors/foss_colors.dart';
-import 'package:foss_ui/src/theme/foss_theme.dart';
-import 'package:foss_ui/src/theme/radii/foss_radii.dart';
-import 'package:foss_ui/src/theme/typography/foss_typography.dart';
+import 'package:fossui/src/foundation/foss_glyphs.dart';
+import 'package:fossui/src/foundation/foss_modal_route.dart';
+import 'package:fossui/src/theme/colors/foss_colors.dart';
+import 'package:fossui/src/theme/foss_theme.dart';
+import 'package:fossui/src/theme/radii/foss_radii.dart';
+import 'package:fossui/src/theme/typography/foss_typography.dart';
 
 part 'foss_drawer_style.dart';
 

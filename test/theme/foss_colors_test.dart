@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:foss_ui/foss_ui.dart';
+import 'package:fossui/fossui.dart';
 
 /// One sRGB channel of `a` blended over `b` at weight `pA` (0..1).
 int mix(int a, int b, double pA) => (a * pA + b * (1 - pA)).round();

@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
-import 'package:foss_ui/src/components/spinner/foss_spinner.dart';
-import 'package:foss_ui/src/theme/theme.dart';
+import 'package:fossui/src/components/spinner/foss_spinner.dart';
+import 'package:fossui/src/theme/theme.dart';
 
 part 'foss_button_controller.dart';
 part 'foss_button_painters.dart';
@@ -49,7 +49,7 @@ enum FossButtonSize {
   lg,
 }
 
-/// A pressable button in the foss_ui style.
+/// A pressable button in the fossui style.
 ///
 /// Pick a look with [variant] and a size with [size]; both read their colors,
 /// radius, type, and spacing from `context.fossTheme`, so a global retheme

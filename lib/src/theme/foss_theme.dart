@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart' show Theme, ThemeData, ThemeExtension;
 import 'package:flutter/widgets.dart';
-import 'package:foss_ui/src/theme/colors/foss_colors.dart';
-import 'package:foss_ui/src/theme/motion/foss_motion.dart';
-import 'package:foss_ui/src/theme/radii/foss_radii.dart';
-import 'package:foss_ui/src/theme/shadows/foss_shadows.dart';
-import 'package:foss_ui/src/theme/spacing/foss_spacing.dart';
-import 'package:foss_ui/src/theme/typography/foss_typography.dart';
+import 'package:fossui/src/theme/colors/foss_colors.dart';
+import 'package:fossui/src/theme/motion/foss_motion.dart';
+import 'package:fossui/src/theme/radii/foss_radii.dart';
+import 'package:fossui/src/theme/shadows/foss_shadows.dart';
+import 'package:fossui/src/theme/spacing/foss_spacing.dart';
+import 'package:fossui/src/theme/typography/foss_typography.dart';
 
 /// The root token bundle: the six leaf bundles in one object. Register it once,
 /// then read everything through `context.fossTheme`. [FossThemeData.light] and
@@ -148,7 +148,7 @@ class FossTheme extends InheritedWidget {
   bool updateShouldNotify(FossTheme oldWidget) => data != oldWidget.data;
 }
 
-/// The single way to read foss_ui tokens.
+/// The single way to read fossui tokens.
 ///
 /// Resolves the [FossTheme] InheritedWidget first, then a `FossThemeData`
 /// registered in `ThemeData.extensions`, and finally the light default, so it
@@ -159,7 +159,7 @@ class FossTheme extends InheritedWidget {
 /// Container(color: t.colors.background, padding: t.spacing.all(4));
 /// ```
 extension FossThemeContext on BuildContext {
-  /// The active foss_ui theme.
+  /// The active fossui theme.
   FossThemeData get fossTheme =>
       FossTheme.maybeOf(this) ??
       Theme.of(this).extension<FossThemeData>() ??

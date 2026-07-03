@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart' show ThemeExtension;
-import 'package:foss_ui/src/theme/lerp_encoders.dart';
+import 'package:fossui/src/theme/lerp_encoders.dart';
 import 'package:theme_tailor_annotation/theme_tailor_annotation.dart';
 
 part 'foss_radii.tailor.dart';

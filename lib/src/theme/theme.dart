@@ -1,4 +1,4 @@
-// Barrel for the foss_ui theme system.
+// Barrel for the fossui theme system.
 //
 // Exports the six token ThemeExtensions (FossColors, FossTypography, FossRadii,
 // FossSpacing, FossShadows, FossMotion), the FossThemeData root, the FossTheme
