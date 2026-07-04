@@ -55,7 +55,7 @@ enum FossBadgeSize {
   md._(height: 22, padding: 3),
 
   /// Prominent: 26 logical pixels tall.
-  lg._(height: 26, padding: 5)
+  lg._(height: 26, padding: 5),
   ;
 
   const FossBadgeSize._({
