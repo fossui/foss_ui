@@ -9,6 +9,8 @@ class _FossMultiComboboxField<T> extends StatefulWidget {
     required this.values,
     required this.size,
     required this.enabled,
+    required this.emptyText,
+    required this.removeLabel,
     required this.filter,
     required this.onChanged,
     this.focusNode,
@@ -24,6 +26,8 @@ class _FossMultiComboboxField<T> extends StatefulWidget {
   final Set<T> values;
   final FossTextFieldSize size;
   final bool enabled;
+  final String emptyText;
+  final String removeLabel;
   final bool Function(String label, String query) filter;
   final ValueChanged<Set<T>> onChanged;
   final FocusNode? focusNode;
@@ -39,20 +43,13 @@ class _FossMultiComboboxField<T> extends StatefulWidget {
 }
 
 class _FossMultiComboboxFieldState<T> extends State<_FossMultiComboboxField<T>>
-    with SingleTickerProviderStateMixin {
-  final OverlayPortalController _portal = OverlayPortalController();
-  final GlobalKey _anchorKey = GlobalKey();
+    with
+        SingleTickerProviderStateMixin,
+        _ComboboxPopup<T, _FossMultiComboboxField<T>> {
   final TextEditingController _controller = TextEditingController();
 
   late FocusNode _focusNode;
   FocusNode? _ownedFocusNode;
-
-  late final AnimationController _animation;
-  late final CurvedAnimation _curve;
-  late final Animation<double> _scale;
-
-  bool _open = false;
-  int _highlight = -1;
 
   @override
   void initState() {
@@ -60,9 +57,22 @@ class _FossMultiComboboxFieldState<T> extends State<_FossMultiComboboxField<T>>
     _focusNode = widget.focusNode ?? (_ownedFocusNode = FocusNode());
     _focusNode.addListener(_onFocusChanged);
     _controller.addListener(_onTextChanged);
-    _animation = AnimationController(vsync: this);
-    _curve = CurvedAnimation(parent: _animation, curve: Curves.easeOut);
-    _scale = Tween<double>(begin: _openScale, end: 1).animate(_curve);
+  }
+
+  @override
+  void didUpdateWidget(_FossMultiComboboxField<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.focusNode == oldWidget.focusNode) return;
+    (oldWidget.focusNode ?? _ownedFocusNode)?.removeListener(_onFocusChanged);
+    _ownedFocusNode?.dispose();
+    final provided = widget.focusNode;
+    if (provided != null) {
+      _ownedFocusNode = null;
+      _focusNode = provided;
+    } else {
+      _focusNode = _ownedFocusNode = FocusNode();
+    }
+    _focusNode.addListener(_onFocusChanged);
   }
 
   @override
@@ -72,17 +82,14 @@ class _FossMultiComboboxFieldState<T> extends State<_FossMultiComboboxField<T>>
       ..removeListener(_onTextChanged)
       ..dispose();
     _ownedFocusNode?.dispose();
-    _animation.dispose();
-    _curve.dispose();
     super.dispose();
   }
 
-  bool get _reduceMotion =>
-      MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+  @override
+  bool get popupEnabled => widget.enabled;
 
-  Duration get _duration => context.fossTheme.motion.overlay;
-
-  List<FossComboboxItem<T>> get _filtered {
+  @override
+  List<FossComboboxItem<T>> get filteredOptions {
     final query = _controller.text;
     if (query.isEmpty) return widget.options;
     return [
@@ -90,6 +97,12 @@ class _FossMultiComboboxFieldState<T> extends State<_FossMultiComboboxField<T>>
         if (widget.filter(o.label, query)) o,
     ];
   }
+
+  @override
+  int initialHighlight() => _firstEnabled(filteredOptions);
+
+  @override
+  void onActivate(FossComboboxItem<T> item) => _toggle(item);
 
   List<FossComboboxItem<T>> get _chips => [
     for (final o in widget.options)
@@ -100,44 +113,11 @@ class _FossMultiComboboxFieldState<T> extends State<_FossMultiComboboxField<T>>
     if (_focusNode.hasFocus) {
       _openPopup();
     } else {
-      _close();
+      _closePopup();
     }
   }
 
-  void _onTextChanged() {
-    if (_open) {
-      setState(() => _highlight = _filtered.indexWhere((o) => o.enabled));
-    }
-  }
-
-  void _openPopup() {
-    if (!widget.enabled || _open) return;
-    setState(() {
-      _open = true;
-      _highlight = _filtered.indexWhere((o) => o.enabled);
-    });
-    _portal.show();
-    _animation.duration = _reduceMotion ? Duration.zero : _duration;
-    unawaited(_animation.forward(from: _reduceMotion ? 1 : 0));
-  }
-
-  void _close() {
-    if (!_open) return;
-    setState(() => _open = false);
-    if (_reduceMotion) {
-      _animation.value = 0;
-      _portal.hide();
-      return;
-    }
-    _animation.duration = _duration;
-    unawaited(
-      _animation.reverse().whenComplete(() {
-        if (mounted && _animation.status == AnimationStatus.dismissed) {
-          _portal.hide();
-        }
-      }),
-    );
-  }
+  void _onTextChanged() => _resetHighlight();
 
   void _toggle(FossComboboxItem<T> item) {
     if (!item.enabled) return;
@@ -154,44 +134,14 @@ class _FossMultiComboboxFieldState<T> extends State<_FossMultiComboboxField<T>>
     widget.onChanged(Set<T>.of(widget.values)..remove(chips.last.value));
   }
 
-  void _moveHighlight(int delta) {
-    final options = _filtered;
-    final count = options.length;
-    if (count == 0) return;
-    var next = _highlight;
-    for (var step = 0; step < count; step++) {
-      next = (next + delta) % count;
-      if (next < 0) next += count;
-      if (options[next].enabled) {
-        setState(() => _highlight = next);
-        return;
-      }
-    }
-  }
-
-  void _pickHighlighted() {
-    final options = _filtered;
-    if (_highlight >= 0 && _highlight < options.length) {
-      _toggle(options[_highlight]);
-    }
-  }
-
+  // The shared popup keys plus Backspace, which removes the last chip when the
+  // input is empty.
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
-    if (event is KeyUpEvent) return KeyEventResult.ignored;
-    final key = event.logicalKey;
-    if (key == LogicalKeyboardKey.escape && _open) {
-      _close();
-      return KeyEventResult.handled;
-    }
-    if (key == LogicalKeyboardKey.arrowDown) {
-      _open ? _moveHighlight(1) : _openPopup();
-      return KeyEventResult.handled;
-    }
-    if (key == LogicalKeyboardKey.arrowUp) {
-      if (_open) _moveHighlight(-1);
-      return KeyEventResult.handled;
-    }
-    if (key == LogicalKeyboardKey.backspace && _controller.text.isEmpty) {
+    final result = _handlePopupKey(event);
+    if (result != KeyEventResult.ignored) return result;
+    if (event is! KeyUpEvent &&
+        event.logicalKey == LogicalKeyboardKey.backspace &&
+        _controller.text.isEmpty) {
       _removeLast();
       return KeyEventResult.handled;
     }
@@ -214,6 +164,7 @@ class _FossMultiComboboxFieldState<T> extends State<_FossMultiComboboxField<T>>
               label,
               style: theme.typography.base.medium.copyWith(
                 color: theme.colors.foreground,
+                height: _labelLineHeight,
               ),
             ),
           ),
@@ -221,15 +172,18 @@ class _FossMultiComboboxFieldState<T> extends State<_FossMultiComboboxField<T>>
         ],
         OverlayPortal(
           controller: _portal,
-          overlayChildBuilder: (context) => _buildOverlay(context, theme, v),
+          overlayChildBuilder: _buildOverlay,
           child: TextFieldTapRegion(
             child: Focus(
               canRequestFocus: false,
               skipTraversal: true,
               onKeyEvent: _onKey,
-              child: KeyedSubtree(
-                key: _anchorKey,
-                child: _shell(theme, v),
+              child: Semantics(
+                expanded: _open,
+                child: KeyedSubtree(
+                  key: _anchorKey,
+                  child: _shell(theme, v),
+                ),
               ),
             ),
           ),
@@ -254,77 +208,45 @@ class _FossMultiComboboxFieldState<T> extends State<_FossMultiComboboxField<T>>
 
   Widget _shell(FossThemeData theme, _ComboboxVisuals v) {
     final colors = theme.colors;
-    final dark = _isDark(colors);
+    final m = fieldMetrics(theme, widget.size);
+    final style = widget.style;
     final hasError = widget.errorText != null;
-    final minHeight = switch (widget.size) {
-      FossTextFieldSize.sm => 32.0,
-      FossTextFieldSize.md => 36.0,
-      FossTextFieldSize.lg => 40.0,
-    };
-    final fill = dark
-        ? Color.alphaBlend(
-            colors.input.withValues(alpha: colors.input.a * _darkFillOpacity),
-            colors.background,
-          )
-        : colors.background;
 
     return ListenableBuilder(
       listenable: Listenable.merge([_focusNode, _controller]),
       builder: (context, _) {
-        final focused = _focusNode.hasFocus && widget.enabled;
-        var borderColor = colors.input;
-        Color? ringColor;
-        if (hasError) {
-          borderColor = colors.destructive.withValues(
-            alpha: focused ? _errorBorderFocusedOpacity : _errorBorderOpacity,
-          );
-          if (focused) {
-            ringColor = colors.destructive.withValues(
-              alpha: dark ? _errorRingOpacityDark : _errorRingOpacityLight,
-            );
-          }
-        } else if (focused) {
-          borderColor = colors.ring;
-          ringColor = colors.ring.withValues(alpha: _focusRingOpacity);
-        }
-
-        Widget content = Padding(
-          padding: EdgeInsets.all(theme.spacing(1) - 1),
-          child: _wrap(theme, v),
-        );
-
-        content = ConstrainedBox(
-          constraints: BoxConstraints(minHeight: minHeight),
-          child: DecoratedBox(
-            decoration: ShapeDecoration(
-              color: fill,
-              shape: RoundedSuperellipseBorder(
-                side: BorderSide(color: borderColor),
-                borderRadius: BorderRadius.circular(v.borderRadius),
+        final box = FossFieldBox(
+          enabled: widget.enabled,
+          hasError: hasError,
+          focused: _focusNode.hasFocus && widget.enabled,
+          background: style?.backgroundColor ?? m.fill,
+          borderColor: style?.borderColor ?? colors.input,
+          ringColor: colors.ring,
+          destructiveColor: colors.destructive,
+          borderRadius: style?.borderRadius ?? m.radius,
+          minHeight: m.minHeight,
+          shadow: style?.shadow ?? theme.shadows.xs,
+          isDark: colors.isDark,
+          // Fill the available width like the single-line field, whose editable
+          // expands. The chips carry their own height, so a small vertical
+          // inset keeps them off the border once the field grows past one run.
+          child: SizedBox(
+            width: double.infinity,
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: m.padX,
+                vertical: theme.spacing(1),
               ),
+              child: _wrap(theme, v),
             ),
-            child: content,
           ),
         );
 
-        if (ringColor != null) {
-          content = CustomPaint(
-            foregroundPainter: _RingPainter(
-              color: ringColor,
-              radius: v.borderRadius,
-            ),
-            child: content,
-          );
-        }
-
-        if (!widget.enabled) {
-          content = Opacity(opacity: _disabledOpacity, child: content);
-        }
-
+        if (!widget.enabled) return box;
         return GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: widget.enabled ? _focusNode.requestFocus : null,
-          child: content,
+          onTap: _focusNode.requestFocus,
+          child: box,
         );
       },
     );
@@ -340,6 +262,7 @@ class _FossMultiComboboxFieldState<T> extends State<_FossMultiComboboxField<T>>
       spacing: theme.spacing(1),
       runSpacing: theme.spacing(1),
       crossAxisAlignment: WrapCrossAlignment.center,
+      runAlignment: WrapAlignment.center,
       children: [
         if (widget.startAddon case final addon?)
           IconTheme.merge(
@@ -352,6 +275,7 @@ class _FossMultiComboboxFieldState<T> extends State<_FossMultiComboboxField<T>>
         for (final item in chips)
           _Chip(
             label: item.label,
+            removeLabel: widget.removeLabel,
             theme: theme,
             enabled: widget.enabled,
             onRemove: () => _toggle(item),
@@ -359,6 +283,7 @@ class _FossMultiComboboxFieldState<T> extends State<_FossMultiComboboxField<T>>
         SizedBox(
           width: 140,
           child: Stack(
+            alignment: Alignment.centerLeft,
             children: [
               if (showPlaceholder)
                 IgnorePointer(
@@ -366,6 +291,9 @@ class _FossMultiComboboxFieldState<T> extends State<_FossMultiComboboxField<T>>
                     widget.hintText ?? '',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                    textHeightBehavior: const TextHeightBehavior(
+                      leadingDistribution: TextLeadingDistribution.even,
+                    ),
                     style: v.textStyle.copyWith(
                       color: colors.mutedForeground.withValues(
                         alpha: colors.mutedForeground.a * _placeholderOpacity,
@@ -384,7 +312,7 @@ class _FossMultiComboboxFieldState<T> extends State<_FossMultiComboboxField<T>>
                   alpha: _focusRingOpacity,
                 ),
                 cursorOpacityAnimates: true,
-                onSubmitted: (_) => _pickHighlighted(),
+                onSubmitted: (_) => _activateHighlighted(),
                 textHeightBehavior: const TextHeightBehavior(
                   leadingDistribution: TextLeadingDistribution.even,
                 ),
@@ -396,42 +324,17 @@ class _FossMultiComboboxFieldState<T> extends State<_FossMultiComboboxField<T>>
     );
   }
 
-  Widget _buildOverlay(
-    BuildContext context,
-    FossThemeData theme,
-    _ComboboxVisuals v,
-  ) {
-    final anchor = _anchorRect(context);
-    if (anchor == null) return const SizedBox.shrink();
-    return TextFieldTapRegion(
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: CustomSingleChildLayout(
-              delegate: _PopupLayout(anchor: anchor),
-              child: FadeTransition(
-                opacity: _curve,
-                child: ScaleTransition(
-                  scale: _scale,
-                  alignment: Alignment.topCenter,
-                  child: _popup(theme, v, anchor.width),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _popup(FossThemeData theme, _ComboboxVisuals v, double anchorWidth) {
-    final options = _filtered;
+  @override
+  Widget buildPopupSurface(BuildContext context) {
+    final theme = context.fossTheme;
+    final v = _apply(_resolve(theme, widget.size), widget.style);
+    final options = filteredOptions;
     final Widget body;
     if (options.isEmpty) {
       body = Padding(
         padding: EdgeInsets.all(theme.spacing(2)),
         child: Text(
-          'No items found.',
+          widget.emptyText,
           textAlign: TextAlign.center,
           style: v.textStyle.copyWith(color: v.mutedForeground),
         ),
@@ -449,41 +352,14 @@ class _FossMultiComboboxFieldState<T> extends State<_FossMultiComboboxField<T>>
               showIndicator: true,
               selected: widget.values.contains(options[i].value),
               highlighted: i == _highlight,
-              onEnter: () {
-                if (_highlight != i) setState(() => _highlight = i);
-              },
+              onEnter: () => _highlightRow(i),
               onTap: () => _toggle(options[i]),
             ),
         ],
       );
     }
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(minWidth: anchorWidth),
-      child: DecoratedBox(
-        decoration: ShapeDecoration(
-          color: v.popupColor,
-          shape: RoundedSuperellipseBorder(
-            side: BorderSide(color: v.popupBorderColor),
-            borderRadius: BorderRadius.circular(v.borderRadius),
-          ),
-          shadows: v.popupShadow,
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(v.borderRadius),
-          child: body,
-        ),
-      ),
-    );
-  }
-
-  Rect? _anchorRect(BuildContext overlayContext) {
-    final anchor = _anchorKey.currentContext?.findRenderObject();
-    final overlay = Overlay.of(overlayContext).context.findRenderObject();
-    if (anchor is! RenderBox || overlay is! RenderBox || !anchor.attached) {
-      return null;
-    }
-    return anchor.localToGlobal(Offset.zero, ancestor: overlay) & anchor.size;
+    return _popupChrome(v, body);
   }
 }
 
@@ -491,12 +367,14 @@ class _FossMultiComboboxFieldState<T> extends State<_FossMultiComboboxField<T>>
 class _Chip extends StatelessWidget {
   const _Chip({
     required this.label,
+    required this.removeLabel,
     required this.theme,
     required this.enabled,
     required this.onRemove,
   });
 
   final String label;
+  final String removeLabel;
   final FossThemeData theme;
   final bool enabled;
   final VoidCallback onRemove;
@@ -527,7 +405,7 @@ class _Chip extends StatelessWidget {
             ),
             Semantics(
               button: true,
-              label: 'Remove',
+              label: removeLabel,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: enabled ? onRemove : null,
@@ -540,11 +418,23 @@ class _Chip extends StatelessWidget {
                       horizontal: theme.spacing(1.5),
                       vertical: theme.spacing(1),
                     ),
-                    child: CustomPaint(
-                      size: const Size.square(14),
-                      painter: _CrossPainter(
-                        color: colors.accentForeground.withValues(
-                          alpha: colors.accentForeground.a * _affixOpacity,
+                    // Compact glyph footprint, hit region grown to the minimum
+                    // touch target so the small X is comfortably tappable.
+                    child: SizedBox.square(
+                      dimension: _removeGlyphSize,
+                      child: OverflowBox(
+                        maxWidth: _minHitTarget,
+                        maxHeight: _minHitTarget,
+                        child: Center(
+                          child: CustomPaint(
+                            size: const Size.square(_removeGlyphSize),
+                            painter: CloseGlyph(
+                              colors.accentForeground.withValues(
+                                alpha:
+                                    colors.accentForeground.a * _affixOpacity,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -557,31 +447,4 @@ class _Chip extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Paints the chips-field focus ring: a superellipse outset past the edge,
-/// matching the corner shape.
-class _RingPainter extends CustomPainter {
-  const _RingPainter({required this.color, required this.radius});
-
-  final Color color;
-  final double radius;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final box = Offset.zero & size;
-    canvas.drawPath(
-      RoundedSuperellipseBorder(
-        borderRadius: BorderRadius.circular(radius + _ringWidth / 2),
-      ).getOuterPath(box.inflate(_ringWidth / 2)),
-      Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = _ringWidth,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_RingPainter old) =>
-      old.color != color || old.radius != radius;
 }

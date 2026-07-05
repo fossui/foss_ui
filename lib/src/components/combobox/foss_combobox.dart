@@ -4,9 +4,12 @@ import 'dart:math' as math;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:fossui/src/components/text_field/foss_text_field.dart';
+import 'package:fossui/src/foundation/foss_field_box.dart';
+import 'package:fossui/src/icons/foss_glyph.dart';
 import 'package:fossui/src/theme/theme.dart';
 
 part '_foss_combobox_field.dart';
+part '_foss_combobox_popup.dart';
 part '_foss_multi_combobox_field.dart';
 part 'foss_combobox_item.dart';
 part 'foss_combobox_style.dart';
@@ -20,19 +23,23 @@ const double _popupMaxHeight = 368;
 const double _rowMinHeight = 32;
 const double _indicatorColumn = 16;
 const double _openScale = 0.96;
+const double _removeGlyphSize = 16;
 
-// Chips field shell: the border deepens on focus and error, the ring stays
-// faint, and the dark surface lifts the fill. Mirrors the field shell.
-const double _ringWidth = 3;
+// Minimum touch region for the trailing affixes and the chip remove button.
+// The region expands past the small glyph without growing its visual footprint.
+const double _minHitTarget = 48;
+
+/// Default empty-state caption when a query matches nothing.
+const String _defaultEmptyText = 'No items found.';
+
+// The chips input text selection uses the ring color at a low alpha, and the
+// placeholder sits at 72% of the muted-foreground alpha.
 const double _focusRingOpacity = 0.24;
-const double _errorBorderOpacity = 0.36;
-const double _errorBorderFocusedOpacity = 0.64;
-const double _errorRingOpacityLight = 0.16;
-const double _errorRingOpacityDark = 0.24;
-const double _darkFillOpacity = 0.32;
 const double _placeholderOpacity = 0.72;
 
-bool _isDark(FossColors c) => c.background.computeLuminance() < 0.5;
+// The chips label tightens its line height to 18px against the 16px base, to
+// match the single-line field label.
+const double _labelLineHeight = 18 / 16;
 
 /// Default filter: a case-insensitive substring match of the query against the
 /// option label.
@@ -73,6 +80,7 @@ class FossAutocomplete extends StatelessWidget {
     this.startAddon,
     this.filter,
     this.onChanged,
+    this.emptyText = _defaultEmptyText,
     this.style,
     super.key,
   });
@@ -118,6 +126,9 @@ class FossAutocomplete extends StatelessWidget {
   /// Called whenever the field text changes, including on a pick.
   final ValueChanged<String>? onChanged;
 
+  /// Caption shown when the query matches no suggestion.
+  final String emptyText;
+
   /// Per-instance overrides layered on the theme-resolved style.
   final FossComboboxStyle? style;
 
@@ -138,6 +149,7 @@ class FossAutocomplete extends StatelessWidget {
       showClear: showClear,
       startAddon: startAddon,
       showIndicator: false,
+      emptyText: emptyText,
       filter: filter ?? _defaultFilter,
       isSelected: (_) => false,
       onPick: (item) => onChanged?.call(item.label),
@@ -182,6 +194,7 @@ class FossCombobox<T> extends StatelessWidget {
     this.showClear = false,
     this.startAddon,
     this.filter,
+    this.emptyText = _defaultEmptyText,
     this.style,
     super.key,
   });
@@ -224,6 +237,9 @@ class FossCombobox<T> extends StatelessWidget {
   /// Overrides the default case-insensitive substring match.
   final bool Function(String label, String query)? filter;
 
+  /// Caption shown when the query matches no option.
+  final String emptyText;
+
   /// Per-instance overrides layered on the theme-resolved style.
   final FossComboboxStyle? style;
 
@@ -241,7 +257,9 @@ class FossCombobox<T> extends StatelessWidget {
       showClear: showClear,
       startAddon: startAddon,
       showIndicator: true,
+      resetOnBlur: true,
       initialText: _selectedLabel(),
+      emptyText: emptyText,
       filter: filter ?? _defaultFilter,
       isSelected: (v) => v == value,
       onPick: (item) => onSelected?.call(item.value),
@@ -291,6 +309,8 @@ class FossMultiCombobox<T> extends StatelessWidget {
     this.enabled = true,
     this.startAddon,
     this.filter,
+    this.emptyText = _defaultEmptyText,
+    this.removeLabel = 'Remove',
     this.style,
     super.key,
   });
@@ -330,6 +350,12 @@ class FossMultiCombobox<T> extends StatelessWidget {
   /// Overrides the default case-insensitive substring match.
   final bool Function(String label, String query)? filter;
 
+  /// Caption shown when the query matches no option.
+  final String emptyText;
+
+  /// Accessible label for each chip's remove button.
+  final String removeLabel;
+
   /// Per-instance overrides layered on the theme-resolved style.
   final FossComboboxStyle? style;
 
@@ -345,6 +371,8 @@ class FossMultiCombobox<T> extends StatelessWidget {
       errorText: errorText,
       enabled: enabled && onSelected != null,
       startAddon: startAddon,
+      emptyText: emptyText,
+      removeLabel: removeLabel,
       filter: filter ?? _defaultFilter,
       onChanged: (next) => onSelected?.call(next),
       style: style,

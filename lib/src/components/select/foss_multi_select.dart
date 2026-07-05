@@ -33,6 +33,7 @@ class FossMultiSelect<T> extends StatelessWidget {
     this.errorText,
     this.size = FossSelectSize.md,
     this.enabled = true,
+    this.selectionLabel,
     this.style,
     super.key,
   });
@@ -63,6 +64,10 @@ class FossMultiSelect<T> extends StatelessWidget {
   /// null.
   final bool enabled;
 
+  /// Builds the trigger text from the number of picks. Defaults to
+  /// "N selected"; override for a different wording or another language.
+  final String Function(int count)? selectionLabel;
+
   /// Per-instance overrides layered on the theme-resolved style.
   final FossSelectStyle? style;
 
@@ -76,13 +81,16 @@ class FossMultiSelect<T> extends StatelessWidget {
       placeholder: placeholder,
       errorText: errorText,
       enabled: enabled && onChanged != null,
-      triggerLabel: values.isEmpty ? null : '${values.length} selected',
+      triggerLabel: values.isEmpty ? null : _countLabel(values.length),
       indicator: _SelectIndicator.checkbox,
       isSelected: values.contains,
       closeOnPick: false,
       onPick: _toggle,
     );
   }
+
+  String _countLabel(int count) =>
+      selectionLabel?.call(count) ?? '$count selected';
 
   void _toggle(T value) {
     final next = {...values};
