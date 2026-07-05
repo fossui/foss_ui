@@ -20,7 +20,7 @@ const double _minTapTarget = 48;
 const double _indicatorColumn = 16;
 const double _iconSize = 18;
 
-const double _ringWidth = 2;
+const double _ringWidth = 3;
 const double _ringOffset = 1;
 
 const double _popupOffset = 4;

@@ -54,6 +54,8 @@ class _FossSelectFieldState<T> extends State<_FossSelectField<T>>
   late final CurvedAnimation _curve;
   late final Animation<double> _scale;
 
+  final List<ScrollPosition> _scrollPositions = [];
+
   bool _open = false;
   int _highlight = -1;
   String _typed = '';
@@ -71,6 +73,7 @@ class _FossSelectFieldState<T> extends State<_FossSelectField<T>>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _detachScrollDismiss();
     _animation.dispose();
     _curve.dispose();
     _states.dispose();
@@ -102,13 +105,36 @@ class _FossSelectFieldState<T> extends State<_FossSelectField<T>>
       _typed = '';
     });
     _portal.show();
+    _attachScrollDismiss();
     _popupFocus.requestFocus();
     _animation.duration = _reduceMotion ? Duration.zero : _duration;
     unawaited(_animation.forward(from: _reduceMotion ? 1 : 0));
   }
 
+  // Close the popup when any enclosing scrollable moves, so it never floats
+  // detached from its trigger. Every ancestor is tracked, not just the nearest,
+  // so a page swipe dismisses it even when the page has its own scroll view.
+  void _attachScrollDismiss() {
+    for (
+      var scrollable = Scrollable.maybeOf(context);
+      scrollable != null;
+      scrollable = Scrollable.maybeOf(scrollable.context)
+    ) {
+      scrollable.position.addListener(_close);
+      _scrollPositions.add(scrollable.position);
+    }
+  }
+
+  void _detachScrollDismiss() {
+    for (final position in _scrollPositions) {
+      position.removeListener(_close);
+    }
+    _scrollPositions.clear();
+  }
+
   void _close() {
     if (!_open) return;
+    _detachScrollDismiss();
     setState(() => _open = false);
     _triggerFocus.requestFocus();
     if (_reduceMotion) {
@@ -279,6 +305,11 @@ class _FossSelectFieldState<T> extends State<_FossSelectField<T>>
             : SystemMouseCursors.basic,
         onShowFocusHighlight: (value) =>
             _states.update(WidgetState.focused, value),
+        // Arrow Down opens the closed trigger, alongside Enter and Space; once
+        // open, arrow keys rove the popup instead.
+        shortcuts: const {
+          SingleActivator(LogicalKeyboardKey.arrowDown): ActivateIntent(),
+        },
         actions: <Type, Action<Intent>>{
           ActivateIntent: CallbackAction<ActivateIntent>(
             onInvoke: (_) {
@@ -394,6 +425,9 @@ class _FossSelectFieldState<T> extends State<_FossSelectField<T>>
   ) {
     final anchor = _anchorRect(context);
     if (anchor == null) return const SizedBox.shrink();
+    // Subtract any on-screen keyboard so the popup lays out against the visible
+    // area, not behind the keyboard.
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     // Android back is handled in didPopRoute, so no Router is required here.
     return Stack(
       children: [
@@ -405,13 +439,13 @@ class _FossSelectFieldState<T> extends State<_FossSelectField<T>>
         ),
         Positioned.fill(
           child: CustomSingleChildLayout(
-            delegate: _PopupLayout(anchor: anchor),
+            delegate: _PopupLayout(anchor: anchor, bottomInset: bottomInset),
             child: FadeTransition(
               opacity: _curve,
               child: ScaleTransition(
                 scale: _scale,
                 alignment: Alignment.topCenter,
-                child: _popup(theme, v, anchor.width),
+                child: _popup(theme, v),
               ),
             ),
           ),
@@ -420,7 +454,7 @@ class _FossSelectFieldState<T> extends State<_FossSelectField<T>>
     );
   }
 
-  Widget _popup(FossThemeData theme, _SelectVisuals v, double anchorWidth) {
+  Widget _popup(FossThemeData theme, _SelectVisuals v) {
     final list = ListView(
       shrinkWrap: true,
       padding: EdgeInsets.all(theme.spacing(1)),
@@ -442,17 +476,22 @@ class _FossSelectFieldState<T> extends State<_FossSelectField<T>>
     );
 
     final dark = theme.colors.isDark;
+    final radius = BorderRadius.circular(v.borderRadius);
     final surface = DecoratedBox(
       decoration: ShapeDecoration(
         color: v.popupColor,
         shape: RoundedSuperellipseBorder(
           side: BorderSide(color: v.popupBorderColor),
-          borderRadius: BorderRadius.circular(v.borderRadius),
+          borderRadius: radius,
         ),
         shadows: v.popupShadow,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(v.borderRadius),
+      // Clip with the same superellipse as the border so a highlighted first or
+      // last row never pokes past the corner.
+      child: ClipPath(
+        clipper: ShapeBorderClipper(
+          shape: RoundedSuperellipseBorder(borderRadius: radius),
+        ),
         child: list,
       ),
     );
@@ -463,16 +502,13 @@ class _FossSelectFieldState<T> extends State<_FossSelectField<T>>
       child: Focus(
         focusNode: _popupFocus,
         onKeyEvent: _onKey,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minWidth: anchorWidth),
-          child: CustomPaint(
-            foregroundPainter: _RimPainter(
-              color: dark ? _rimDark : _rimLight,
-              radius: v.borderRadius,
-              topLit: dark,
-            ),
-            child: surface,
+        child: CustomPaint(
+          foregroundPainter: _RimPainter(
+            color: dark ? _rimDark : _rimLight,
+            radius: v.borderRadius,
+            topLit: dark,
           ),
+          child: surface,
         ),
       ),
     );
@@ -627,28 +663,38 @@ class _SelectRow<T> extends StatelessWidget {
 /// Positions the popup below the anchor, flipping above when there is no room,
 /// and clamping its height to the viewport.
 class _PopupLayout extends SingleChildLayoutDelegate {
-  const _PopupLayout({required this.anchor});
+  const _PopupLayout({required this.anchor, required this.bottomInset});
 
   final Rect anchor;
 
+  /// Height taken by the on-screen keyboard at the bottom of the overlay.
+  final double bottomInset;
+
   @override
   BoxConstraints getConstraintsForChild(BoxConstraints constraints) {
-    final below = constraints.maxHeight - anchor.bottom - _popupOffset;
+    final viewportBottom = constraints.maxHeight - bottomInset;
+    final below = viewportBottom - anchor.bottom - _popupOffset;
     final above = anchor.top - _popupOffset;
     final maxHeight = (math.max(below, above) - _popupMargin).clamp(
       0.0,
       constraints.maxHeight,
     );
+    // Match the anchor width, capped to the viewport minus a margin on each
+    // side, so the popup keeps symmetric insets and never runs off the edge.
+    final width = math.min(
+      anchor.width,
+      constraints.maxWidth - _popupMargin * 2,
+    );
     return BoxConstraints(
-      minWidth: anchor.width,
-      maxWidth: constraints.maxWidth,
+      minWidth: width,
+      maxWidth: width,
       maxHeight: maxHeight,
     );
   }
 
   @override
   Offset getPositionForChild(Size size, Size childSize) {
-    final below = size.height - anchor.bottom - _popupOffset;
+    final below = (size.height - bottomInset) - anchor.bottom - _popupOffset;
     final placeBelow = childSize.height <= below;
     final dy = placeBelow
         ? anchor.bottom + _popupOffset
@@ -663,7 +709,8 @@ class _PopupLayout extends SingleChildLayoutDelegate {
   }
 
   @override
-  bool shouldRelayout(_PopupLayout oldDelegate) => oldDelegate.anchor != anchor;
+  bool shouldRelayout(_PopupLayout oldDelegate) =>
+      oldDelegate.anchor != anchor || oldDelegate.bottomInset != bottomInset;
 }
 
 /// Paints a 1px rim inside the trigger, top-lit in dark mode, fading to nothing
