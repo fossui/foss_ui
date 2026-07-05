@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart' show TextInputAction, TextInputType;
 import 'package:flutter/widgets.dart';
+import 'package:fossui/src/foundation/foss_field_box.dart';
 import 'package:fossui/src/theme/theme.dart';
 
 part 'foss_text_field_style.dart';
@@ -10,32 +11,18 @@ const double _disabledOpacity = 0.64;
 // Leading and trailing icon glyphs sit at 80% of the text color so they read as
 // quieter than the value.
 const double _affixOpacity = 0.8;
-const double _minTapTarget = 48;
-const double _ringWidth = 3;
+
+// The text selection highlight is the ring color at a low alpha.
+const double _focusRingOpacity = 0.24;
 
 // Placeholder text sits at 72% of the muted-foreground alpha.
 const double _placeholderOpacity = 0.72;
-
-// Error border and ring alphas: the border deepens when the field is focused,
-// the ring stays faint and lifts in dark mode.
-const double _errorBorderOpacity = 0.36;
-const double _errorBorderFocusedOpacity = 0.64;
-const double _errorRingOpacityLight = 0.16;
-const double _errorRingOpacityDark = 0.24;
-
-// The focus ring is the ring color at a low alpha.
-const double _focusRingOpacity = 0.24;
 
 // Dark surfaces lift the fill by the input color at 32% of its alpha.
 const double _darkFillOpacity = 0.32;
 
 // The label tightens its line height to 18px against the 16px base.
 const double _labelLineHeight = 18 / 16;
-
-// Inner top-lit rim at rest: a faint dark line in light mode, a faint white
-// highlight in dark mode.
-const Color _rimLight = Color(0x0A000000);
-const Color _rimDark = Color(0x0FFFFFFF);
 
 /// The size of a [FossTextField].
 enum FossTextFieldSize {
@@ -296,30 +283,6 @@ class _FossTextFieldState extends State<FossTextField>
   }) {
     final colors = theme.colors;
 
-    // Border, ring, and shadow are derived from the field state. The resting
-    // shadow drops whenever the field is focused, invalid, or disabled.
-    final Color borderColor;
-    final Color? ringColor;
-    if (hasError) {
-      borderColor = colors.destructive.withValues(
-        alpha: focused ? _errorBorderFocusedOpacity : _errorBorderOpacity,
-      );
-      final errorRingAlpha = colors.isDark
-          ? _errorRingOpacityDark
-          : _errorRingOpacityLight;
-      ringColor = focused
-          ? colors.destructive.withValues(alpha: errorRingAlpha)
-          : null;
-    } else if (focused) {
-      borderColor = colors.ring;
-      ringColor = colors.ring.withValues(alpha: _focusRingOpacity);
-    } else {
-      borderColor = v.borderColor;
-      ringColor = null;
-    }
-
-    final showShadow = widget.enabled && !focused && !hasError;
-
     // A multiline field grows with its text: top-align the content, add
     // vertical padding, size the min height to the starting line count, and
     // drop the single-line icon rail.
@@ -330,75 +293,43 @@ class _FossTextFieldState extends State<FossTextField>
         ? v.padding.add(EdgeInsets.symmetric(vertical: theme.spacing(1.5) - 1))
         : v.padding;
 
-    Widget content = Padding(
-      padding: padding,
-      child: Row(
-        spacing: v.gap,
-        crossAxisAlignment: multiline
-            ? CrossAxisAlignment.start
-            : CrossAxisAlignment.center,
-        children: [
-          if (widget.leading case final leading? when !multiline)
-            IconTheme.merge(data: v.iconTheme, child: leading),
-          Expanded(child: _buildEditable(theme, v)),
-          if (widget.trailing case final trailing? when !multiline)
-            IconTheme.merge(data: v.iconTheme, child: trailing),
-        ],
+    final box = FossFieldBox(
+      enabled: widget.enabled,
+      hasError: hasError,
+      focused: focused,
+      background: v.background,
+      borderColor: v.borderColor,
+      ringColor: colors.ring,
+      destructiveColor: colors.destructive,
+      borderRadius: v.borderRadius,
+      minHeight: multiline ? _multilineMinHeight(theme, v) : v.minHeight,
+      shadow: v.shadow,
+      isDark: colors.isDark,
+      child: Padding(
+        padding: padding,
+        child: Row(
+          spacing: v.gap,
+          crossAxisAlignment: multiline
+              ? CrossAxisAlignment.start
+              : CrossAxisAlignment.center,
+          children: [
+            if (widget.leading case final leading? when !multiline)
+              IconTheme.merge(data: v.iconTheme, child: leading),
+            Expanded(child: _buildEditable(theme, v)),
+            if (widget.trailing case final trailing? when !multiline)
+              IconTheme.merge(data: v.iconTheme, child: trailing),
+          ],
+        ),
       ),
     );
 
-    content = DecoratedBox(
-      decoration: ShapeDecoration(
-        color: v.background,
-        shape: RoundedSuperellipseBorder(
-          side: BorderSide(color: borderColor),
-          borderRadius: BorderRadius.circular(v.borderRadius),
-        ),
-        shadows: showShadow ? v.shadow : const [],
-      ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          minHeight: multiline ? _multilineMinHeight(theme, v) : v.minHeight,
-        ),
-        child: content,
-      ),
-    );
-
-    if (ringColor != null) {
-      content = CustomPaint(
-        foregroundPainter: _RingPainter(
-          color: ringColor,
-          radius: v.borderRadius,
-        ),
-        child: content,
-      );
-    }
-
-    // At rest, a 1px inner rim; dropped under the same states as the shadow.
-    // Dark lights the top edge with a white highlight, light darkens the bottom
-    // edge. Rim radius is the inner edge (radius - 1).
-    if (showShadow) {
-      final dark = colors.isDark;
-      content = CustomPaint(
-        foregroundPainter: _RimPainter(
-          color: dark ? _rimDark : _rimLight,
-          radius: v.borderRadius - 1,
-          topLit: dark,
-        ),
-        child: content,
-      );
-    }
-
-    if (!widget.enabled) {
-      content = Opacity(opacity: _disabledOpacity, child: content);
-      return _withMinTapTarget(content);
-    }
+    if (!widget.enabled) return box;
 
     // The selection gesture detector requests focus on tap and positions the
     // caret; translucent so taps anywhere in the box reach it.
     return _gestureBuilder.buildGestureDetector(
       behavior: HitTestBehavior.translucent,
-      child: _withMinTapTarget(content),
+      child: box,
     );
   }
 
@@ -473,17 +404,15 @@ class _FossTextFieldState extends State<FossTextField>
     final lineHeight = (style.height ?? 1.5) * (style.fontSize ?? 16);
     return lines * lineHeight + (theme.spacing(1.5) - 1) * 2;
   }
-
-  // Centers the box in a region at least [_minTapTarget] tall so the field
-  // meets the minimum touch-target guideline without inflating its height.
-  Widget _withMinTapTarget(Widget box) => ConstrainedBox(
-    constraints: const BoxConstraints(minHeight: _minTapTarget),
-    child: Center(heightFactor: 1, child: box),
-  );
 }
 
-/// Builds the default appearance for a [size] from the theme tokens.
-_FieldVisuals _resolve(FossThemeData theme, FossTextFieldSize size) {
+/// The size-driven field geometry: resting fill, corner radius, minimum height,
+/// and horizontal inset. Shared so every field surface (single-line input,
+/// chips input) resolves the same box from the same [size].
+({double minHeight, double padX, Color fill, double radius}) fieldMetrics(
+  FossThemeData theme,
+  FossTextFieldSize size,
+) {
   final c = theme.colors;
 
   // Horizontal inset from the spacing scale: sm sits tighter than md and lg.
@@ -504,16 +433,24 @@ _FieldVisuals _resolve(FossThemeData theme, FossTextFieldSize size) {
         )
       : c.background;
 
+  return (minHeight: minHeight, padX: padX, fill: fill, radius: theme.radii.lg);
+}
+
+/// Builds the default appearance for a [size] from the theme tokens.
+_FieldVisuals _resolve(FossThemeData theme, FossTextFieldSize size) {
+  final c = theme.colors;
+  final m = fieldMetrics(theme, size);
+
   return _FieldVisuals(
-    background: fill,
+    background: m.fill,
     borderColor: c.input,
     textColor: c.foreground,
     hintColor: c.mutedForeground.withValues(alpha: _placeholderOpacity),
     labelColor: c.foreground,
     helperColor: c.mutedForeground,
-    borderRadius: theme.radii.lg,
-    padding: EdgeInsets.symmetric(horizontal: padX),
-    minHeight: minHeight,
+    borderRadius: m.radius,
+    padding: EdgeInsets.symmetric(horizontal: m.padX),
+    minHeight: m.minHeight,
     textStyle: theme.typography.base,
     // The label uses the tightened 18px line height.
     labelStyle: theme.typography.base.medium.copyWith(height: _labelLineHeight),
@@ -589,70 +526,4 @@ class _FieldVisuals {
     size: iconSize,
     color: textColor.withValues(alpha: textColor.a * _affixOpacity),
   );
-}
-
-/// Paints a 1px rim inside the field: brightest along one edge, fading to
-/// nothing by the middle. [topLit] lights the top edge; otherwise the bottom.
-class _RimPainter extends CustomPainter {
-  const _RimPainter({
-    required this.color,
-    required this.radius,
-    required this.topLit,
-  });
-
-  final Color color;
-  final double radius;
-  final bool topLit;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = (Offset.zero & size).deflate(0.5);
-    final shape = RSuperellipse.fromRectAndRadius(
-      rect,
-      Radius.circular(radius),
-    );
-    final shader = LinearGradient(
-      begin: topLit ? Alignment.topCenter : Alignment.bottomCenter,
-      end: Alignment.center,
-      colors: [color, color.withValues(alpha: 0)],
-    ).createShader(rect);
-    final paint = Paint()
-      ..shader = shader
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-    canvas.drawRSuperellipse(shape, paint);
-  }
-
-  @override
-  bool shouldRepaint(_RimPainter oldDelegate) =>
-      oldDelegate.color != color ||
-      oldDelegate.radius != radius ||
-      oldDelegate.topLit != topLit;
-}
-
-/// Paints the focus ring: a superellipse outset just past the field edge,
-/// matching its corner shape so it reads smooth, not circular.
-class _RingPainter extends CustomPainter {
-  const _RingPainter({required this.color, required this.radius});
-
-  final Color color;
-  final double radius;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = (Offset.zero & size).inflate(_ringWidth);
-    final shape = RSuperellipse.fromRectAndRadius(
-      rect,
-      Radius.circular(radius + _ringWidth),
-    );
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = _ringWidth;
-    canvas.drawRSuperellipse(shape, paint);
-  }
-
-  @override
-  bool shouldRepaint(_RingPainter oldDelegate) =>
-      oldDelegate.color != color || oldDelegate.radius != radius;
 }
