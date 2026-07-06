@@ -42,10 +42,19 @@ class _FossSpinnerState extends State<FossSpinner>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Read the motion token here, not in initState: it depends on inherited
-    // widgets. A new cycle length applies on the next loop.
+    // Read inherited config here, not in initState. A new cycle length applies
+    // on the next loop.
     _controller.duration = context.fossTheme.motion.spinner;
-    if (!_controller.isAnimating) unawaited(_controller.repeat());
+    // Only spin when motion is allowed: under reduced motion build drops the
+    // rotation, so a running controller would tick invisibly. React either way
+    // the flag flips.
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (reduceMotion) {
+      _controller.stop();
+    } else if (!_controller.isAnimating) {
+      unawaited(_controller.repeat());
+    }
   }
 
   @override
@@ -67,6 +76,7 @@ class _FossSpinnerState extends State<FossSpinner>
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     return Semantics(
       label: widget.semanticLabel,
+      liveRegion: true,
       child: reduceMotion
           ? arc
           : RotationTransition(turns: _controller, child: arc),
