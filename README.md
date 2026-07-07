@@ -1,23 +1,24 @@
 # fossui
 
-An open-source Flutter UI library, inspired by Cal.com's design system.
-Themed from one source, accessible, one import.
+An open-source Flutter UI library of themeable, accessible components, inspired
+by coss.com/ui, Cal.com's design system. Themed from one source, one import.
 
-> **Status: beta, under active development.** The first pre-release
-> (`0.1.0-beta.1`) ships 21 components, but APIs and tokens can still change
+> **Status: beta, under active development.** This pre-release
+> (`0.1.0-beta.2`) ships 21 components, but APIs and tokens can still change
 > between releases. Pin an exact version if you depend on it.
 
 > **Unofficial.** Not affiliated with or endorsed by Cal.com, Inc. or coss.com.
 > See [NOTICE](NOTICE) for attribution.
 
-<img width="2560" height="2490" alt="banner" src="https://github.com/user-attachments/assets/4e5ff237-4db8-48f8-9219-cd1064f4c0b1" />
+
+<img width="2555" height="2240" alt="examples" src="https://github.com/user-attachments/assets/32f01ce5-6622-4dce-9f70-8fc320dd2da9" />
 
 
 ## Install
 
 ```yaml
 dependencies:
-  fossui: ^0.1.0-beta.1
+  fossui: ^0.1.0-beta.2
 ```
 
 ## Usage
@@ -73,8 +74,20 @@ fvm flutter pub get
 fvm flutter test
 ```
 
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the
+workflow and the [Code of Conduct](CODE_OF_CONDUCT.md).
+
 
 
 ## License
 
 MIT. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+
+## Star History
+
+<!-- star-history:start -->
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/star-history/star-history-dark-20260706143857.svg">
+  <img alt="Star history" src="assets/star-history/star-history-light-20260706143857.svg">
+</picture>
+<!-- star-history:end -->
