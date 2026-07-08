@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart' show SemanticsValidationResult;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fossui/fossui.dart';
@@ -284,7 +285,9 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets('meets the minimum tap target', (tester) async {
+    testWidgets('a plain option hugs its content, not a 48px floor', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         host(
           FossRadioGroup<String>(
@@ -294,7 +297,12 @@ void main() {
         ),
       );
 
-      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      // The row tracks the circle and label height so a stacked group stays
+      // tight against the reference, not padded out to a 48px tap floor.
+      expect(
+        tester.getSize(find.byType(FossRadio<String>)).height,
+        lessThan(48),
+      );
     });
   });
 
@@ -437,6 +445,85 @@ void main() {
       await tester.pump();
 
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('FossRadio keyboard and semantics', () {
+    testWidgets('arrow keys move selection through the group', (tester) async {
+      String? picked;
+      await tester.pumpWidget(
+        _group(groupValue: 'a', onChanged: (v) => picked = v),
+      );
+
+      // Focus enters the group at the selected option, then arrows move and
+      // select the next and previous enabled option.
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      expect(picked, 'b');
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+      expect(picked, 'a');
+    });
+
+    testWidgets('an errored option is marked invalid for assistive tech', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        _group(groupValue: 'a', errorText: 'Required', onChanged: (_) {}),
+      );
+
+      expect(
+        tester.getSemantics(find.byType(FossRadio<String>).first),
+        matchesSemantics(
+          isInMutuallyExclusiveGroup: true,
+          hasCheckedState: true,
+          isChecked: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          isFocusable: true,
+          hasTapAction: true,
+          hasFocusAction: true,
+          label: 'Apple',
+          validationResult: SemanticsValidationResult.invalid,
+        ),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('the checked dot is 8px in the primary foreground', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_group(groupValue: 'a', onChanged: (_) {}));
+
+      final dot = _circleOf('Apple').last;
+      expect(
+        (tester.widget<DecoratedBox>(dot).decoration as ShapeDecoration).color,
+        FossThemeData.light.colors.primaryForeground,
+      );
+      expect(tester.getSize(dot), const Size(8, 8));
+    });
+
+    testWidgets('a description-only option renders its circle and text', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _group(
+          groupValue: 'a',
+          onChanged: (_) {},
+          children: const [
+            FossRadio(value: 'a', description: 'Detail, no title'),
+            FossRadio(value: 'b', label: 'Banana'),
+          ],
+        ),
+      );
+
+      expect(find.text('Detail, no title'), findsOneWidget);
+      // Checked, so the outer circle plus the dot both render.
+      expect(_circleOf('Detail, no title'), findsNWidgets(2));
     });
   });
 }

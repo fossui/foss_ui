@@ -13,16 +13,20 @@ enum FossSeparatorOrientation {
 /// A hairline rule that divides content along a row or a column. Static and
 /// non-interactive: a 1 logical pixel line in the `border` role.
 ///
-/// [orientation] picks the axis. [FossSeparatorOrientation.horizontal] (the
-/// default) fills the available width; [FossSeparatorOrientation.vertical]
-/// fills the parent's height and so needs a bounded cross-axis height (a [Row],
-/// for example, supplies the line's height). The color comes from
-/// `context.fossTheme`; retheme globally through `FossColors.border` rather
-/// than per instance.
+/// [orientation] picks the axis. The rule fills its long axis, so that axis
+/// must be bounded by the parent. [FossSeparatorOrientation.horizontal] (the
+/// default) fills the width, so it needs a bounded-width parent (a [Column]
+/// with stretch, or an [Expanded] inside a [Row]); vertical fills the height
+/// and needs a bounded-height parent (a [Row], for example, supplies it). An
+/// unbounded long axis surfaces a layout error rather than misrendering. The
+/// color comes from `context.fossTheme`; retheme globally through
+/// `FossColors.border` rather than per instance.
 ///
 /// Decorative by default: [decorative] true keeps the line out of the semantics
-/// tree, the common case for a purely visual rule. Set it false when the line
-/// marks a real content boundary, so assistive tech reaches it as a node.
+/// tree, the common case for a purely visual rule. Set it false to mark a real
+/// content boundary; the line then emits a structural boundary node that groups
+/// and separates the surrounding content. The node carries no spoken label by
+/// design, since a divider names nothing.
 ///
 /// ```dart
 /// Column(
@@ -55,8 +59,8 @@ class FossSeparator extends StatelessWidget {
     final isHorizontal = orientation == FossSeparatorOrientation.horizontal;
 
     // double.infinity fills the long axis (clamped to the parent's bound); the
-    // 1px short axis is the only baked metric. Vertical needs a bounded parent
-    // height, else the infinite extent has nothing to clamp against.
+    // 1px short axis is the only baked metric. That long axis must be bounded
+    // by the parent, else the infinite extent has nothing to clamp against.
     final line = SizedBox(
       width: isHorizontal ? double.infinity : 1,
       height: isHorizontal ? 1 : double.infinity,

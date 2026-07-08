@@ -4,21 +4,8 @@ import 'package:flutter/widgets.dart';
 import 'package:fossui/src/theme/theme.dart';
 
 part 'foss_tabs_style.dart';
-
-// Fixed tab geometry, the mobile base values, not the desktop step. Vertical
-// padding plus the label line height sums to the 36 tab height, so the tab
-// grows with the text under a larger scale instead of clipping.
-const double _tabHeight = 36;
-const double _tabPadX = 9;
-const double _tabPadY = (_tabHeight - 24) / 2;
-const double _iconSize = 18;
-const double _barThickness = 2;
-const double _ringWidth = 2;
-const double _disabledOpacity = 0.64;
-
-// The inactive label is dimmed to 72% inside the segmented bar, lifting to
-// full strength on hover. The underline variant keeps it at full strength.
-const double _segmentedInactiveOpacity = 0.72;
+part 'foss_tabs_view.dart';
+part 'foss_tabs_visuals.dart';
 
 /// The two tab looks.
 enum FossTabsVariant {
@@ -145,8 +132,7 @@ class _FossTabsState<T> extends State<FossTabs<T>> {
 
   Rect? _activeRect;
   T? _internal;
-  int? _hovered;
-  int? _focused;
+  T? _hovered;
 
   bool get _horizontal => widget.orientation == FossTabsOrientation.horizontal;
 
@@ -168,6 +154,8 @@ class _FossTabsState<T> extends State<FossTabs<T>> {
     for (final value in stale) {
       _nodes.remove(value)?.dispose();
     }
+    // Drop a hover pointing at a tab that no longer exists after a reorder.
+    if (_hovered != null && !values.contains(_hovered)) _hovered = null;
   }
 
   @override
@@ -318,9 +306,14 @@ class _FossTabsState<T> extends State<FossTabs<T>> {
 
   Widget _buildStrip(FossThemeData theme, _TabsVisuals v, bool reduceMotion) {
     final segmented = widget.variant == FossTabsVariant.segmented;
+    final ltr = Directionality.of(context) == TextDirection.ltr;
 
     final tabs = <Widget>[
-      for (var i = 0; i < widget.tabs.length; i++) _buildTab(theme, v, i),
+      for (var i = 0; i < widget.tabs.length; i++)
+        KeyedSubtree(
+          key: _keyFor(widget.tabs[i].value),
+          child: _tabButton(theme, v, i),
+        ),
     ];
 
     final flex = _horizontal
@@ -340,7 +333,14 @@ class _FossTabsState<T> extends State<FossTabs<T>> {
 
     final indicator = _activeRect == null
         ? null
-        : _buildIndicator(theme, v, _activeRect!, reduceMotion);
+        : _TabIndicator(
+            rect: _activeRect!,
+            variant: widget.variant,
+            horizontal: _horizontal,
+            ltr: ltr,
+            visuals: v,
+            duration: reduceMotion ? Duration.zero : theme.motion.overlay,
+          );
 
     final stack = Stack(
       children: <Widget>[
@@ -372,246 +372,25 @@ class _FossTabsState<T> extends State<FossTabs<T>> {
     );
   }
 
-  Widget _buildIndicator(
-    FossThemeData theme,
-    _TabsVisuals v,
-    Rect rect,
-    bool reduceMotion,
-  ) {
-    final ltr = Directionality.of(context) == TextDirection.ltr;
-    final duration = reduceMotion ? Duration.zero : theme.motion.overlay;
-
-    // The pill fills the active tab; the bar hugs one edge of it.
-    final (
-      double left,
-      double top,
-      double width,
-      double height,
-      Widget child,
-    ) = switch (widget.variant) {
-      FossTabsVariant.segmented => (
-        rect.left,
-        rect.top,
-        rect.width,
-        rect.height,
-        DecoratedBox(
-          decoration: ShapeDecoration(
-            color: v.indicatorColor,
-            shadows: v.indicatorShadow,
-            shape: RoundedSuperellipseBorder(
-              borderRadius: BorderRadius.circular(v.tabRadius),
-            ),
-          ),
-        ),
-      ),
-      FossTabsVariant.underline when _horizontal => (
-        rect.left,
-        rect.bottom - _barThickness,
-        rect.width,
-        _barThickness,
-        ColoredBox(color: v.indicatorColor),
-      ),
-      FossTabsVariant.underline => (
-        ltr ? rect.left : rect.right - _barThickness,
-        rect.top,
-        _barThickness,
-        rect.height,
-        ColoredBox(color: v.indicatorColor),
-      ),
-    };
-
-    return AnimatedPositioned(
-      left: left,
-      top: top,
-      width: width,
-      height: height,
-      duration: duration,
-      curve: Curves.easeInOut,
-      child: child,
-    );
-  }
-
-  Widget _buildTab(FossThemeData theme, _TabsVisuals v, int index) {
+  Widget _tabButton(FossThemeData theme, _TabsVisuals v, int index) {
     final tab = widget.tabs[index];
-    final selected = tab.value == _value;
-    final hovered = _hovered == index;
-    final underline = widget.variant == FossTabsVariant.underline;
-
-    final Color textColor;
-    if (selected) {
-      textColor = v.activeForeground;
-    } else if (underline) {
-      textColor = v.inactiveForeground;
-    } else {
-      textColor = v.inactiveForeground.withValues(
-        alpha: hovered ? 1 : _segmentedInactiveOpacity,
-      );
-    }
-
-    final glyphs = <Widget>[
-      if (tab.icon case final icon?)
-        IconTheme.merge(
-          data: IconThemeData(size: _iconSize, color: textColor),
-          child: ExcludeSemantics(child: icon),
-        ),
-      Text(
-        tab.label,
-        maxLines: 1,
-        softWrap: false,
-        overflow: TextOverflow.clip,
-        style: v.labelStyle.copyWith(color: textColor),
-      ),
-    ];
-
-    Widget body = Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: _tabPadX,
-        vertical: _tabPadY,
-      ),
-      child: Row(
-        mainAxisSize: _horizontal ? MainAxisSize.min : MainAxisSize.max,
-        mainAxisAlignment: _horizontal
-            ? MainAxisAlignment.center
-            : MainAxisAlignment.start,
-        spacing: theme.spacing(1.5),
-        children: glyphs,
-      ),
-    );
-
-    // Underline tabs tint on hover; the focus ring overlays without shifting
-    // layout. The segmented active background is the sliding indicator, not the
-    // tab.
-    body = DecoratedBox(
-      decoration: ShapeDecoration(
-        color: underline && hovered ? v.hoverColor : null,
-        shape: RoundedSuperellipseBorder(
-          borderRadius: BorderRadius.circular(v.tabRadius),
-        ),
-      ),
-      child: body,
-    );
-
-    if (_focused == index) {
-      body = DecoratedBox(
-        position: DecorationPosition.foreground,
-        decoration: ShapeDecoration(
-          shape: RoundedSuperellipseBorder(
-            side: BorderSide(color: theme.colors.ring, width: _ringWidth),
-            borderRadius: BorderRadius.circular(v.tabRadius),
-          ),
-        ),
-        child: body,
-      );
-    }
-
-    final node = _nodeFor(tab.value);
-    Widget interactive = MouseRegion(
-      cursor: tab.enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
-      onEnter: tab.enabled ? (_) => setState(() => _hovered = index) : null,
-      onExit: tab.enabled
-          ? (_) {
-              if (_hovered == index) setState(() => _hovered = null);
-            }
-          : null,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        excludeFromSemantics: true,
-        onTap: tab.enabled
-            ? () {
-                node.requestFocus();
-                _select(tab.value);
-              }
-            : null,
-        child: Focus(
-          focusNode: node,
-          canRequestFocus: tab.enabled,
-          skipTraversal: !tab.enabled,
-          onFocusChange: (focused) => setState(() {
-            if (focused) {
-              _focused = index;
-            } else if (_focused == index) {
-              _focused = null;
-            }
-          }),
-          onKeyEvent: (_, event) => _onKey(event, index),
-          child: body,
-        ),
-      ),
-    );
-
-    if (!tab.enabled) {
-      interactive = Opacity(
-        opacity: _disabledOpacity,
-        child: IgnorePointer(child: interactive),
-      );
-    }
-
-    return KeyedSubtree(
-      key: _keyFor(tab.value),
-      child: Semantics(
-        role: SemanticsRole.tab,
-        container: true,
-        selected: selected,
-        enabled: tab.enabled,
-        button: true,
-        label: tab.label,
-        onTap: tab.enabled ? () => _select(tab.value) : null,
-        child: ExcludeSemantics(child: interactive),
-      ),
+    return _TabButton(
+      label: tab.label,
+      icon: tab.icon,
+      enabled: tab.enabled,
+      selected: tab.value == _value,
+      hovered: _hovered == tab.value,
+      variant: widget.variant,
+      horizontal: _horizontal,
+      visuals: v,
+      iconGap: theme.spacing(1.5),
+      focusNode: _nodeFor(tab.value),
+      onSelect: () => _select(tab.value),
+      onEnter: () => setState(() => _hovered = tab.value),
+      onExit: () {
+        if (_hovered == tab.value) setState(() => _hovered = null);
+      },
+      onKeyEvent: (event) => _onKey(event, index),
     );
   }
-}
-
-/// Builds the default appearance from the theme tokens for [variant], then lays
-/// a per-instance [override] over it field by field.
-_TabsVisuals _resolve(
-  FossThemeData theme,
-  FossTabsVariant variant,
-  bool dark,
-  FossTabsStyle? override,
-) {
-  final c = theme.colors;
-  final segmented = variant == FossTabsVariant.segmented;
-  return _TabsVisuals(
-    barColor: override?.barColor ?? c.muted,
-    indicatorColor:
-        override?.indicatorColor ??
-        (segmented ? (dark ? c.input : c.background) : c.primary),
-    indicatorShadow:
-        override?.indicatorShadow ??
-        (segmented ? theme.shadows.sm : const <BoxShadow>[]),
-    hoverColor: override?.hoverColor ?? c.accent,
-    activeForeground: override?.activeForeground ?? c.foreground,
-    inactiveForeground: override?.inactiveForeground ?? c.mutedForeground,
-    labelStyle: override?.labelStyle ?? theme.typography.base.medium,
-    barRadius: theme.radii.lg,
-    tabRadius: theme.radii.md,
-  );
-}
-
-/// The fully resolved, non-null appearance. A [FossTabsStyle] override is laid
-/// over it by [_resolve], so the widget reads only non-null fields.
-@immutable
-class _TabsVisuals {
-  const _TabsVisuals({
-    required this.barColor,
-    required this.indicatorColor,
-    required this.indicatorShadow,
-    required this.hoverColor,
-    required this.activeForeground,
-    required this.inactiveForeground,
-    required this.labelStyle,
-    required this.barRadius,
-    required this.tabRadius,
-  });
-
-  final Color barColor;
-  final Color indicatorColor;
-  final List<BoxShadow> indicatorShadow;
-  final Color hoverColor;
-  final Color activeForeground;
-  final Color inactiveForeground;
-  final TextStyle labelStyle;
-  final double barRadius;
-  final double tabRadius;
 }

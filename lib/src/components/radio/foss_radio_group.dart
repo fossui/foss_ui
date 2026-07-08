@@ -73,66 +73,68 @@ class FossRadioGroup<T> extends StatelessWidget {
     final active = enabled && onChanged != null;
     final hasError = errorText != null;
 
-    return FossRadioGroupScope<T>(
+    // RadioGroup owns the selection, the roving arrow-key focus, and the
+    // radiogroup semantics role; the scope carries the enabled, error, and
+    // variant state each option reads.
+    return RadioGroup<T>(
       groupValue: groupValue,
-      onChanged: onChanged,
-      enabled: active,
-      hasError: hasError,
-      variant: variant,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: theme.spacing(2),
-        children: [
-          if (label case final text?)
-            Opacity(
-              opacity: active ? 1 : _disabledOpacity,
-              child: Text(
-                text,
-                style: theme.typography.base.medium.copyWith(
-                  color: colors.foreground,
+      // RadioGroup requires a callback; the group disables per option through
+      // the scope's [enabled], so no option is interactive when inactive.
+      onChanged: (value) {
+        if (value != null) onChanged?.call(value);
+      },
+      child: FossRadioGroupScope<T>(
+        enabled: active,
+        hasError: hasError,
+        variant: variant,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: theme.spacing(2),
+          children: [
+            if (label case final text?)
+              Opacity(
+                opacity: active ? 1 : _disabledOpacity,
+                child: Text(
+                  text,
+                  style: theme.typography.base.medium.copyWith(
+                    color: colors.foreground,
+                  ),
                 ),
               ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: theme.spacing(3),
+              children: children,
             ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: theme.spacing(3),
-            children: children,
-          ),
-          if (errorText case final text?)
-            Semantics(
-              liveRegion: true,
-              child: Text(
-                text,
-                style: theme.typography.xs.copyWith(
-                  color: colors.destructiveForeground,
+            if (errorText case final text?)
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  text,
+                  style: theme.typography.xs.copyWith(
+                    color: colors.destructive,
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Shares a [FossRadioGroup]'s selection state with its [FossRadio]
-/// descendants. Read it with [FossRadioGroupScope.of].
+/// Shares a [FossRadioGroup]'s enabled, error, and variant state with its
+/// [FossRadio] descendants. Selection and focus flow through the enclosing
+/// [RadioGroup]; read this scope with [FossRadioGroupScope.of].
 class FossRadioGroupScope<T> extends InheritedWidget {
   /// Creates the scope. Provided by [FossRadioGroup]; not constructed directly.
   const FossRadioGroupScope({
-    required this.groupValue,
-    required this.onChanged,
     required this.enabled,
     required this.hasError,
     required this.variant,
     required super.child,
     super.key,
   });
-
-  /// The group's selected value.
-  final T? groupValue;
-
-  /// The group's change callback, invoked with a tapped option's value.
-  final ValueChanged<T>? onChanged;
 
   /// Whether the group is interactive.
   final bool enabled;
@@ -150,9 +152,7 @@ class FossRadioGroupScope<T> extends InheritedWidget {
 
   @override
   bool updateShouldNotify(FossRadioGroupScope<T> oldWidget) =>
-      groupValue != oldWidget.groupValue ||
       enabled != oldWidget.enabled ||
       hasError != oldWidget.hasError ||
-      variant != oldWidget.variant ||
-      onChanged != oldWidget.onChanged;
+      variant != oldWidget.variant;
 }

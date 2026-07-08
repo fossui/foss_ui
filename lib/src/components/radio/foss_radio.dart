@@ -1,3 +1,4 @@
+import 'package:flutter/semantics.dart' show SemanticsValidationResult;
 import 'package:flutter/widgets.dart';
 import 'package:fossui/src/theme/theme.dart';
 
@@ -9,7 +10,6 @@ const double _dotSize = 8;
 const double _ringWidth = 2;
 const double _ringOffset = 1;
 const double _disabledOpacity = 0.64;
-const double _minTapTarget = 48;
 
 // Error border and ring alphas: the border deepens when the option is focused,
 // the ring lifts in dark mode.
@@ -82,11 +82,11 @@ class FossRadio<T> extends StatefulWidget {
 }
 
 class _FossRadioState<T> extends State<FossRadio<T>> {
-  final WidgetStatesController _states = WidgetStatesController();
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void dispose() {
-    _states.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -100,14 +100,56 @@ class _FossRadioState<T> extends State<FossRadio<T>> {
       );
     }
 
-    final checked = group.groupValue == widget.value;
     final enabled = widget.enabled && group.enabled;
-    final hasError = group.hasError;
     final v = _apply(_resolve(theme), widget.style);
 
-    void select() => group.onChanged?.call(widget.value);
+    // The group's RadioGroup owns selection, roving focus, and the group
+    // semantics; RawRadio registers this option, drives its gesture, focus, and
+    // keyboard, and hands the paint back through [builder].
+    Widget radio = RawRadio<T>(
+      value: widget.value,
+      focusNode: _focusNode,
+      autofocus: false,
+      toggleable: false,
+      enabled: enabled,
+      mouseCursor: WidgetStateProperty.resolveWith(
+        (states) =>
+            enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      ),
+      groupRegistry: RadioGroup.maybeOf<T>(context),
+      builder: (context, state) => _option(
+        theme,
+        v,
+        checked: state.value ?? false,
+        focused: state.states.contains(WidgetState.focused),
+        enabled: enabled,
+        hasError: group.hasError,
+        variant: group.variant,
+      ),
+    );
 
-    final card = group.variant == FossRadioGroupVariant.card;
+    // Mark the option invalid for assistive tech when the group is in error;
+    // RawRadio already carries the radio role, checked, and mutex flags, which
+    // MergeSemantics folds together with the label and description.
+    if (group.hasError) {
+      radio = Semantics(
+        validationResult: SemanticsValidationResult.invalid,
+        child: radio,
+      );
+    }
+    return MergeSemantics(child: radio);
+  }
+
+  Widget _option(
+    FossThemeData theme,
+    _RadioVisuals v, {
+    required bool checked,
+    required bool focused,
+    required bool enabled,
+    required bool hasError,
+    required FossRadioGroupVariant variant,
+  }) {
+    final card = variant == FossRadioGroupVariant.card;
     final hasText = widget.label != null || widget.description != null;
     Widget option = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,6 +160,7 @@ class _FossRadioState<T> extends State<FossRadio<T>> {
           theme,
           v,
           checked: checked,
+          focused: focused,
           hasError: hasError,
           enabled: enabled,
           hasText: hasText,
@@ -133,49 +176,9 @@ class _FossRadioState<T> extends State<FossRadio<T>> {
       option = Opacity(opacity: _disabledOpacity, child: option);
     }
 
-    // One merged node carries the radio role plus the label and description
-    // text, so assistive tech announces the option once, not twice.
-    return MergeSemantics(
-      child: Semantics(
-        inMutuallyExclusiveGroup: true,
-        checked: checked,
-        enabled: enabled,
-        child: FocusableActionDetector(
-          enabled: enabled,
-          mouseCursor: enabled
-              ? SystemMouseCursors.click
-              : SystemMouseCursors.basic,
-          onShowFocusHighlight: (value) =>
-              _states.update(WidgetState.focused, value),
-          actions: <Type, Action<Intent>>{
-            ActivateIntent: CallbackAction<ActivateIntent>(
-              onInvoke: (_) {
-                select();
-                return null;
-              },
-            ),
-          },
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: enabled ? select : null,
-            // The card supplies its own padded hit area; the plain option is
-            // floored to the minimum tap target around its content.
-            child: card
-                ? option
-                : ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      minHeight: _minTapTarget,
-                    ),
-                    child: Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      heightFactor: 1,
-                      child: option,
-                    ),
-                  ),
-          ),
-        ),
-      ),
-    );
+    // The plain option hugs its circle and label so a stacked group reads
+    // tight, matching the reference. The card supplies its own padded surface.
+    return option;
   }
 
   // The circle, aligned to the first text line when a label or description is
@@ -184,19 +187,18 @@ class _FossRadioState<T> extends State<FossRadio<T>> {
     FossThemeData theme,
     _RadioVisuals v, {
     required bool checked,
+    required bool focused,
     required bool hasError,
     required bool enabled,
     required bool hasText,
   }) {
-    final circle = ListenableBuilder(
-      listenable: _states,
-      builder: (_, _) => _circle(
-        theme,
-        v,
-        checked: checked,
-        hasError: hasError,
-        enabled: enabled,
-      ),
+    final circle = _circle(
+      theme,
+      v,
+      checked: checked,
+      focused: focused,
+      hasError: hasError,
+      enabled: enabled,
     );
     if (!hasText) return circle;
     // Center on the first text line: the title when present, else the
@@ -213,12 +215,12 @@ class _FossRadioState<T> extends State<FossRadio<T>> {
     FossThemeData theme,
     _RadioVisuals v, {
     required bool checked,
+    required bool focused,
     required bool hasError,
     required bool enabled,
   }) {
     final colors = theme.colors;
     final dark = colors.isDark;
-    final focused = _states.value.contains(WidgetState.focused);
     final showBorder = !checked;
 
     // Border stays the resting input color except when invalid, where it

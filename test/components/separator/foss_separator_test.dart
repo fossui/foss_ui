@@ -102,7 +102,36 @@ void main() {
         ),
         findsNothing,
       );
+      // A boundary node, not a spoken one: it separates surrounding content but
+      // carries no label, since a divider names nothing.
+      expect(tester.getSemantics(find.byType(FossSeparator)).label, isEmpty);
       handle.dispose();
+    });
+
+    testWidgets('an unbounded long axis surfaces a layout error', (
+      tester,
+    ) async {
+      // A Column hands its child unbounded height, so the vertical rule's
+      // infinite extent has nothing to clamp against; Flutter reports it rather
+      // than silently misrendering.
+      await tester.pumpWidget(
+        host(
+          const Column(
+            children: [
+              FossSeparator(orientation: FossSeparatorOrientation.vertical),
+            ],
+          ),
+        ),
+      );
+      // The invalid constraint throws (cascading into several errors) rather
+      // than silently misrendering.
+      expect(tester.takeException(), isNotNull);
+      // Reset to a valid tree so the broken layout does not re-throw at
+      // teardown, then drain the cascade from the invalid constraint.
+      await tester.pumpWidget(host(const SizedBox()));
+      while (tester.takeException() != null) {
+        // drain follow-on layout errors from the same invalid constraint
+      }
     });
 
     testWidgets('stays 1px under 2x text scale', (tester) async {

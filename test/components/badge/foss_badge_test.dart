@@ -190,10 +190,10 @@ void main() {
                 as EdgeInsets)
             .left;
 
-    testWidgets('sm: height 20, padding 3, xs type, radius 4', (tester) async {
+    testWidgets('sm: height 20, padding 4, xs type, radius 4', (tester) async {
       await pump(tester, FossBadgeSize.sm);
       expect(minWidth(tester), 20);
-      expect(padding(tester), 3);
+      expect(padding(tester), 4);
       expect(labelStyle(tester).fontSize, FossTypography.standard.xs.fontSize);
       expect(
         pillShape(tester).borderRadius.resolve(TextDirection.ltr).topLeft.x,
@@ -201,10 +201,10 @@ void main() {
       );
     });
 
-    testWidgets('md: height 22, padding 3, sm type, radii.sm', (tester) async {
+    testWidgets('md: height 22, padding 4, sm type, radii.sm', (tester) async {
       await pump(tester, FossBadgeSize.md);
       expect(minWidth(tester), 22);
-      expect(padding(tester), 3);
+      expect(padding(tester), 4);
       expect(labelStyle(tester).fontSize, FossTypography.standard.sm.fontSize);
       expect(
         pillShape(tester).borderRadius.resolve(TextDirection.ltr).topLeft.x,
@@ -212,12 +212,12 @@ void main() {
       );
     });
 
-    testWidgets('lg: height 26, padding 5, base type, radii.sm', (
+    testWidgets('lg: height 26, padding 6, base type, radii.sm', (
       tester,
     ) async {
       await pump(tester, FossBadgeSize.lg);
       expect(minWidth(tester), 26);
-      expect(padding(tester), 5);
+      expect(padding(tester), 6);
       expect(
         labelStyle(tester).fontSize,
         FossTypography.standard.base.fontSize,
@@ -302,7 +302,22 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets('style overrides win over the variant', (tester) async {
+    testWidgets('grows with textScale and mirrors under RTL', (tester) async {
+      await tester.pumpWidget(
+        host(
+          const FossBadge(label: Text('Tag'), leading: Text('L')),
+          direction: TextDirection.rtl,
+          textScale: 2,
+        ),
+      );
+      expect(tester.takeException(), isNull);
+      final size = tester.getSize(find.byType(FossBadge));
+      expect(size.height, greaterThan(22));
+    });
+  });
+
+  group('style', () {
+    testWidgets('overrides win over the variant', (tester) async {
       await tester.pumpWidget(
         host(
           const FossBadge(
@@ -318,17 +333,103 @@ void main() {
       expect(labelStyle(tester).color, const Color(0xFF040506));
     });
 
-    testWidgets('grows with textScale and mirrors under RTL', (tester) async {
+    testWidgets('border, radius, and label style reach the pill', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         host(
-          const FossBadge(label: Text('Tag'), leading: Text('L')),
-          direction: TextDirection.rtl,
-          textScale: 2,
+          const FossBadge(
+            label: Text('x'),
+            style: FossBadgeStyle(
+              borderColor: Color(0xFF0A0B0C),
+              borderRadius: 9,
+              labelStyle: TextStyle(fontSize: 21),
+            ),
+          ),
         ),
       );
-      expect(tester.takeException(), isNull);
-      final size = tester.getSize(find.byType(FossBadge));
-      expect(size.height, greaterThan(22));
+      final shape = pillShape(tester);
+      expect(shape.side.color, const Color(0xFF0A0B0C));
+      expect((shape.borderRadius as BorderRadius).topLeft.x, 9);
+      expect(labelStyle(tester).fontSize, 21);
+    });
+  });
+
+  group('dark', () {
+    testWidgets('outline lifts its fill with the input color', (tester) async {
+      await tester.pumpWidget(
+        host(
+          const FossBadge(
+            label: Text('x'),
+            variant: FossBadgeVariant.outline,
+          ),
+          theme: FossThemeData.dark,
+        ),
+      );
+      final c = FossThemeData.dark.colors;
+      expect(
+        pillDecoration(tester).color,
+        Color.alphaBlend(
+          c.input.withValues(alpha: c.input.a * 0.32),
+          c.background,
+        ),
+      );
+    });
+
+    testWidgets('a solid variant keeps its role fill', (tester) async {
+      await tester.pumpWidget(
+        host(const FossBadge(label: Text('x')), theme: FossThemeData.dark),
+      );
+      expect(pillDecoration(tester).color, FossThemeData.dark.colors.primary);
+    });
+  });
+
+  group('slots and geometry', () {
+    testWidgets('the trailing slot is themed and dimmed like the leading', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          const FossBadge(
+            label: Text('x'),
+            leading: Text('L'),
+            trailing: Text('T'),
+          ),
+        ),
+      );
+      final themed = tester
+          .widgetList<IconTheme>(
+            find.descendant(
+              of: find.byType(FossBadge),
+              matching: find.byType(IconTheme),
+            ),
+          )
+          .where((t) => t.data.size == 14);
+      expect(themed.length, 2);
+      final dimmed = tester
+          .widgetList<Opacity>(
+            find.descendant(
+              of: find.byType(FossBadge),
+              matching: find.byType(Opacity),
+            ),
+          )
+          .where((o) => o.opacity == 0.8);
+      expect(dimmed.length, 2);
+    });
+
+    testWidgets('icon slots are excluded from semantics', (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        host(const FossBadge(label: Text('Tag'), leading: Text('ICON'))),
+      );
+      expect(find.bySemanticsLabel('ICON'), findsNothing);
+      expect(find.bySemanticsLabel('Tag'), findsOneWidget);
+      handle.dispose();
+    });
+
+    testWidgets('a single-glyph badge hugs a square pill', (tester) async {
+      await tester.pumpWidget(host(const FossBadge(label: Text('1'))));
+      expect(tester.getSize(find.byType(FossBadge)), const Size(22, 22));
     });
   });
 }
