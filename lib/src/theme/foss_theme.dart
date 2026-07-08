@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' show Theme, ThemeData, ThemeExtension;
 import 'package:flutter/widgets.dart';
 import 'package:fossui/src/theme/colors/foss_colors.dart';
+import 'package:fossui/src/theme/foss_theme_spec.dart';
 import 'package:fossui/src/theme/motion/foss_motion.dart';
 import 'package:fossui/src/theme/radii/foss_radii.dart';
 import 'package:fossui/src/theme/shadows/foss_shadows.dart';
@@ -67,6 +68,60 @@ class FossThemeData extends ThemeExtension<FossThemeData> {
   /// Animation durations.
   final FossMotion motion;
 
+  /// Layers [spec] over this theme, returning a rethemed copy. Each unset spec
+  /// field keeps this theme's value; colors pass through enumerated, while
+  /// radius, spacing, shadow color, and font family seed their scales. Start
+  /// from [light] or [dark].
+  ///
+  /// ```dart
+  /// final theme = FossThemeData.light.retheme(
+  ///   const FossThemeSpec(primary: Color(0xFF51F0A8), radius: 22),
+  /// );
+  /// ```
+  FossThemeData retheme(FossThemeSpec spec) {
+    final radius = spec.radius;
+    final unit = spec.spacing;
+    final shadowColor = spec.shadowColor;
+    final fontFamily = spec.fontFamily;
+    return FossThemeData(
+      colors: colors.copyWith(
+        background: spec.background,
+        foreground: spec.foreground,
+        card: spec.card,
+        cardForeground: spec.cardForeground,
+        popover: spec.popover,
+        popoverForeground: spec.popoverForeground,
+        primary: spec.primary,
+        primaryForeground: spec.primaryForeground,
+        secondary: spec.secondary,
+        secondaryForeground: spec.secondaryForeground,
+        muted: spec.muted,
+        mutedForeground: spec.mutedForeground,
+        accent: spec.accent,
+        accentForeground: spec.accentForeground,
+        destructive: spec.destructive,
+        destructiveForeground: spec.destructiveForeground,
+        destructiveForegroundOn: spec.destructiveForegroundOn,
+        info: spec.info,
+        infoForeground: spec.infoForeground,
+        success: spec.success,
+        successForeground: spec.successForeground,
+        warning: spec.warning,
+        warningForeground: spec.warningForeground,
+        border: spec.border,
+        input: spec.input,
+        ring: spec.ring,
+      ),
+      radii: radius == null ? radii : FossRadii.fromBase(radius),
+      spacing: unit == null ? spacing : FossSpacing(unit: unit),
+      typography: fontFamily == null
+          ? typography
+          : _reFamily(typography, fontFamily),
+      shadows: shadowColor == null ? shadows : _reTint(shadows, shadowColor),
+      motion: motion,
+    );
+  }
+
   @override
   FossThemeData copyWith({
     FossColors? colors,
@@ -122,6 +177,35 @@ class FossThemeData extends ThemeExtension<FossThemeData> {
   int get hashCode =>
       Object.hash(colors, radii, spacing, typography, shadows, motion);
 }
+
+/// Rebuilds every type step on [family], preserving size, height, and spacing.
+FossTypography _reFamily(FossTypography t, String family) => FossTypography(
+  xs: t.xs.copyWith(fontFamily: family),
+  sm: t.sm.copyWith(fontFamily: family),
+  base: t.base.copyWith(fontFamily: family),
+  lg: t.lg.copyWith(fontFamily: family),
+  xl: t.xl.copyWith(fontFamily: family),
+  xl2: t.xl2.copyWith(fontFamily: family),
+);
+
+/// Re-tints every shadow layer to [color], keeping each layer's alpha and
+/// geometry.
+FossShadows _reTint(FossShadows s, Color color) => FossShadows(
+  xs: _tint(s.xs, color),
+  sm: _tint(s.sm, color),
+  md: _tint(s.md, color),
+  lg: _tint(s.lg, color),
+);
+
+List<BoxShadow> _tint(List<BoxShadow> layers, Color color) => [
+  for (final layer in layers)
+    BoxShadow(
+      color: color.withValues(alpha: layer.color.a),
+      offset: layer.offset,
+      blurRadius: layer.blurRadius,
+      spreadRadius: layer.spreadRadius,
+    ),
+];
 
 /// Provides a [FossThemeData] to its subtree for non-Material apps. Material
 /// apps can instead register the theme in `ThemeData.extensions`; either way
