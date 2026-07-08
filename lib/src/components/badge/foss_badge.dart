@@ -16,6 +16,10 @@ const double _iconOpacity = 0.8;
 const double _softFillAlphaLight = 0.08;
 const double _softFillAlphaDark = 0.16;
 
+/// The outline pill lifts its fill on dark by the input color at 32% of its
+/// alpha, composited to opaque, matching the field surface.
+const double _outlineDarkFillAlpha = 0.32;
+
 /// The color axis of a [FossBadge]. [primary] is the default solid pill;
 /// [secondary], [outline], and [destructive] complete the solid set; [info],
 /// [success], [warning], and [error] are soft, tinting the role at low alpha.
@@ -49,13 +53,13 @@ enum FossBadgeVariant {
 /// padding, and type step. [md] is the default.
 enum FossBadgeSize {
   /// Compact: 20 logical pixels tall.
-  sm._(height: 20, padding: 3, radius: 4),
+  sm._(height: 20, padding: 4, radius: 4),
 
   /// Default: 22 logical pixels tall.
-  md._(height: 22, padding: 3),
+  md._(height: 22, padding: 4),
 
   /// Prominent: 26 logical pixels tall.
-  lg._(height: 26, padding: 5),
+  lg._(height: 26, padding: 6),
   ;
 
   const FossBadgeSize._({
@@ -228,7 +232,12 @@ class FossBadge extends StatelessWidget {
       border: null,
     ),
     FossBadgeVariant.outline => (
-      fill: c.background,
+      fill: c.isDark
+          ? Color.alphaBlend(
+              c.input.withValues(alpha: c.input.a * _outlineDarkFillAlpha),
+              c.background,
+            )
+          : c.background,
       foreground: c.foreground,
       border: c.border,
     ),
