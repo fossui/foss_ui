@@ -231,9 +231,7 @@ class _FossTextFieldState extends State<FossTextField>
     final box = _buildBox(theme, v, hasError: hasError, focused: focused);
 
     final caption = widget.errorText ?? widget.helperText;
-    final captionColor = hasError
-        ? theme.colors.destructiveForeground
-        : v.helperColor;
+    final captionColor = hasError ? theme.colors.destructive : v.helperColor;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
