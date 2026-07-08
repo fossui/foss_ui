@@ -5,8 +5,8 @@ part of 'foss_tabs.dart';
 /// Pass one via `style:` to tweak a one-off without changing the theme for
 /// every other tab set.
 ///
-/// The focus ring and the tab and bar radii stay token-driven; retheme
-/// [FossColors] or [FossRadii] to change them globally.
+/// The tab and bar radii stay token-driven; retheme [FossRadii] to change
+/// them globally.
 ///
 /// A segmented set with a green active pill:
 ///

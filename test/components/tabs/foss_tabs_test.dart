@@ -521,4 +521,176 @@ void main() {
       expect(_filled(const Color(0xFF00FF00)), findsWidgets);
     });
   });
+
+  group('FossTabs styling', () {
+    testWidgets('disabled tab dims to 0.64', (tester) async {
+      await tester.pumpWidget(
+        host(
+          const FossTabs<String>(
+            initialValue: 'one',
+            tabs: [
+              FossTab(value: 'one', label: 'One', content: Text('PanelOne')),
+              FossTab(
+                value: 'two',
+                label: 'Two',
+                enabled: false,
+                content: Text('PanelTwo'),
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byWidgetPredicate((w) => w is Opacity && w.opacity == 0.64),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('segmented pill wears a faint 5% shadow', (tester) async {
+      await tester.pumpWidget(
+        host(const FossTabs<String>(tabs: _tabs, initialValue: 'one')),
+      );
+      await tester.pumpAndSettle();
+
+      final pill = tester
+          .widgetList<DecoratedBox>(find.byType(DecoratedBox))
+          .map((d) => d.decoration)
+          .whereType<ShapeDecoration>()
+          .firstWhere((d) => (d.shadows ?? const []).isNotEmpty);
+      expect(pill.shadows!.first.color.a, closeTo(0.05, 0.001));
+    });
+
+    testWidgets('large text scale grows the tab without clipping', (
+      tester,
+    ) async {
+      Widget scaled(double factor) => host(
+        MediaQuery(
+          data: MediaQueryData(textScaler: TextScaler.linear(factor)),
+          child: const FossTabs<String>(tabs: _tabs, initialValue: 'one'),
+        ),
+      );
+
+      await tester.pumpWidget(scaled(1));
+      await tester.pumpAndSettle();
+      final base = tester.getSize(_filled(colors.muted).first).height;
+
+      await tester.pumpWidget(scaled(2));
+      await tester.pumpAndSettle();
+      final grown = tester.getSize(_filled(colors.muted).first).height;
+
+      expect(grown, greaterThan(base));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('segmented inactive label dims to 72%', (tester) async {
+      await tester.pumpWidget(
+        host(const FossTabs<String>(tabs: _tabs, initialValue: 'one')),
+      );
+      await tester.pumpAndSettle();
+
+      final inactive = tester.widget<Text>(find.text('Two'));
+      expect(
+        inactive.style?.color,
+        colors.mutedForeground.withValues(alpha: 0.72),
+      );
+    });
+
+    testWidgets('style overrides drive the bar, active label, and text style', (
+      tester,
+    ) async {
+      const barColor = Color(0xFF0A0B0C);
+      const activeFg = Color(0xFF0D0E0F);
+      await tester.pumpWidget(
+        host(
+          const FossTabs<String>(
+            tabs: _tabs,
+            initialValue: 'one',
+            style: FossTabsStyle(
+              barColor: barColor,
+              activeForeground: activeFg,
+              labelStyle: TextStyle(fontSize: 21),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(_filled(barColor), findsWidgets);
+      final active = tester.widget<Text>(find.text('One'));
+      expect(active.style?.color, activeFg);
+      expect(active.style?.fontSize, 21);
+    });
+
+    testWidgets('inactive foreground override colors an underline tab', (
+      tester,
+    ) async {
+      const inactiveFg = Color(0xFF010203);
+      await tester.pumpWidget(
+        host(
+          const FossTabs<String>(
+            tabs: _tabs,
+            initialValue: 'one',
+            variant: FossTabsVariant.underline,
+            style: FossTabsStyle(inactiveForeground: inactiveFg),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<Text>(find.text('Two')).style?.color, inactiveFg);
+    });
+
+    testWidgets('hover override tints the underline tab', (tester) async {
+      const hover = Color(0xFF04FF05);
+      await tester.pumpWidget(
+        host(
+          const FossTabs<String>(
+            tabs: _tabs,
+            initialValue: 'one',
+            variant: FossTabsVariant.underline,
+            style: FossTabsStyle(hoverColor: hover),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await gesture.addPointer(location: Offset.zero);
+      addTearDown(gesture.removePointer);
+      await gesture.moveTo(tester.getCenter(find.text('Two')));
+      await tester.pumpAndSettle();
+
+      expect(_filled(hover), findsOneWidget);
+    });
+
+    testWidgets('leading icon receives the 18px icon theme', (tester) async {
+      double? size;
+      await tester.pumpWidget(
+        host(
+          FossTabs<String>(
+            initialValue: 'one',
+            tabs: [
+              FossTab(
+                value: 'one',
+                label: 'One',
+                icon: Builder(
+                  builder: (context) {
+                    size = IconTheme.of(context).size;
+                    return const SizedBox.shrink();
+                  },
+                ),
+                content: const Text('PanelOne'),
+              ),
+              const FossTab(value: 'two', label: 'Two', content: Text('P2')),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(size, 18);
+    });
+  });
 }
