@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart' show ThemeExtension;
 import 'package:fossui/src/theme/lerp_encoders.dart';
 import 'package:theme_tailor_annotation/theme_tailor_annotation.dart';
@@ -22,6 +24,24 @@ class FossRadii extends ThemeExtension<FossRadii> with _$FossRadiiTailorMixin {
     required this.xl,
     required this.xl2,
   });
+
+  /// Derives the full scale from a single [base] (the `lg` step). Steps offset
+  /// from it (sm -4, md -2, lg +0, xl +4, xl2 +6), each clamped at 0, so
+  /// `fromBase(10)` reproduces [standard].
+  ///
+  /// ```dart
+  /// final r = FossRadii.fromBase(22); // rounder corners across the app
+  /// ```
+  factory FossRadii.fromBase(double base) {
+    double step(double delta) => math.max(0, base + delta);
+    return FossRadii(
+      sm: step(-4),
+      md: step(-2),
+      lg: step(0),
+      xl: step(4),
+      xl2: step(6),
+    );
+  }
 
   /// Small corners (6 px): controls, chips.
   @override

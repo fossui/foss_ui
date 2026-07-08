@@ -7,6 +7,7 @@
 
 export 'colors/foss_colors.dart';
 export 'foss_theme.dart';
+export 'foss_theme_spec.dart';
 export 'motion/foss_motion.dart';
 export 'radii/foss_radii.dart';
 export 'shadows/foss_shadows.dart';
