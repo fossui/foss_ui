@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' show setEquals;
+import 'package:flutter/semantics.dart' show SemanticsValidationResult;
 import 'package:flutter/widgets.dart';
 import 'package:fossui/src/icons/foss_glyph.dart';
 import 'package:fossui/src/theme/theme.dart';
@@ -95,6 +96,7 @@ class FossCheckbox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = context.fossTheme;
+    final onChanged = this.onChanged;
     final active = enabled && onChanged != null;
     final checked = value ?? false;
     final indeterminate = value == null;
@@ -105,10 +107,11 @@ class FossCheckbox extends StatelessWidget {
       enabled: active,
       hasError: errorText != null,
       card: false,
+      standalone: true,
       label: label,
       description: description,
       style: style,
-      onToggle: active ? () => onChanged!(value != true) : null,
+      onToggle: active ? () => onChanged(value != true) : null,
     );
 
     if (errorText case final text?) {
@@ -123,7 +126,7 @@ class FossCheckbox extends StatelessWidget {
             child: Text(
               text,
               style: theme.typography.xs.copyWith(
-                color: theme.colors.destructiveForeground,
+                color: theme.colors.destructive,
               ),
             ),
           ),
@@ -144,6 +147,7 @@ class _FossCheckboxControl extends StatefulWidget {
     required this.enabled,
     required this.hasError,
     required this.card,
+    required this.standalone,
     required this.label,
     required this.description,
     required this.style,
@@ -155,6 +159,11 @@ class _FossCheckboxControl extends StatefulWidget {
   final bool enabled;
   final bool hasError;
   final bool card;
+
+  /// A standalone [FossCheckbox] floors its plain box to a full tap target; a
+  /// grouped item stays compact so a stacked group reads tight.
+  final bool standalone;
+
   final String? label;
   final String? description;
   final FossCheckboxStyle? style;
@@ -197,12 +206,16 @@ class _FossCheckboxControlState extends State<_FossCheckboxControl> {
     }
 
     // One merged node carries the checkbox role plus the label and description
-    // so assistive tech announces the option once, not twice.
+    // so assistive tech announces the option once, not twice; an errored box
+    // reports invalid.
     return MergeSemantics(
       child: Semantics(
         checked: widget.checked,
         mixed: widget.indeterminate ? true : null,
         enabled: widget.enabled,
+        validationResult: widget.hasError
+            ? SemanticsValidationResult.invalid
+            : SemanticsValidationResult.none,
         child: FocusableActionDetector(
           enabled: widget.enabled,
           mouseCursor: widget.enabled
@@ -226,22 +239,29 @@ class _FossCheckboxControlState extends State<_FossCheckboxControl> {
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: widget.onToggle,
-            // The card supplies its own padded hit area; the plain option is
-            // floored to the minimum tap target around its content.
-            child: widget.card
-                ? option
-                : ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      minHeight: _minTapTarget,
-                    ),
-                    child: Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      heightFactor: 1,
-                      child: option,
-                    ),
-                  ),
+            child: _hitArea(option),
           ),
         ),
+      ),
+    );
+  }
+
+  // The card supplies its own padded surface. A standalone checkbox floors its
+  // box to a full tap target on both axes (the [Align] keeps the box tight); a
+  // grouped item hugs its content so a stacked group reads tight, matching the
+  // reference.
+  Widget _hitArea(Widget option) {
+    if (widget.card || !widget.standalone) return option;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(
+        minHeight: _minTapTarget,
+        minWidth: _minTapTarget,
+      ),
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        heightFactor: 1,
+        widthFactor: 1,
+        child: option,
       ),
     );
   }

@@ -107,7 +107,7 @@ class FossCheckboxGroup<T> extends StatelessWidget {
               child: Text(
                 text,
                 style: theme.typography.xs.copyWith(
-                  color: colors.destructiveForeground,
+                  color: colors.destructive,
                 ),
               ),
             ),
@@ -190,6 +190,7 @@ class FossCheckboxItem<T> extends StatelessWidget {
       enabled: enabled,
       hasError: group.hasError,
       card: group.variant == FossCheckboxGroupVariant.card,
+      standalone: false,
       label: label,
       description: description,
       style: style,

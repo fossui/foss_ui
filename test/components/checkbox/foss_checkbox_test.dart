@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart' show SemanticsValidationResult;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fossui/fossui.dart';
@@ -656,6 +657,85 @@ void main() {
       await tester.pump();
 
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('FossCheckbox tap target and grouping', () {
+    testWidgets('a bare standalone box meets the tap target', (tester) async {
+      await tester.pumpWidget(host(FossCheckbox(onChanged: (_) {})));
+
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+    });
+
+    testWidgets('a grouped plain item hugs its content, not a 48px floor', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_group(onChanged: (_) {}));
+
+      // The item tracks the box and label height so a stacked group stays tight
+      // against the reference, not padded out to a 48px tap floor.
+      expect(
+        tester.getSize(find.byType(FossCheckboxItem<String>).first).height,
+        lessThan(48),
+      );
+    });
+
+    testWidgets('space toggles a focused group item', (tester) async {
+      Set<String>? next;
+      await tester.pumpWidget(_group(onChanged: (v) => next = v));
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.space);
+      await tester.pump();
+
+      expect(next, contains('a'));
+    });
+
+    testWidgets('an errored group item is marked invalid', (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(_group(errorText: 'Required', onChanged: (_) {}));
+
+      expect(
+        tester.getSemantics(find.byType(FossCheckboxItem<String>).first),
+        matchesSemantics(
+          hasCheckedState: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          isFocusable: true,
+          hasTapAction: true,
+          hasFocusAction: true,
+          label: 'Apple',
+          validationResult: SemanticsValidationResult.invalid,
+        ),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('style label size and gap reach the render', (tester) async {
+      await tester.pumpWidget(
+        host(
+          FossCheckbox(
+            label: 'Terms',
+            onChanged: (_) {},
+            style: const FossCheckboxStyle(
+              labelStyle: TextStyle(fontSize: 21),
+              gap: 13,
+            ),
+          ),
+        ),
+      );
+
+      expect(tester.widget<Text>(find.text('Terms')).style?.fontSize, 21);
+      final row = tester.widget<Row>(
+        find
+            .descendant(
+              of: find.byType(FossCheckbox),
+              matching: find.byType(Row),
+            )
+            .first,
+      );
+      expect(row.spacing, 13);
     });
   });
 }
