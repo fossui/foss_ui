@@ -87,7 +87,7 @@ MIT. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
 <!-- star-history:start -->
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/star-history/star-history-dark-20260706143857.svg">
-  <img alt="Star history" src="assets/star-history/star-history-light-20260706143857.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/star-history/star-history-dark-20260709015708.svg">
+  <img alt="Star history" src="assets/star-history/star-history-light-20260709015708.svg">
 </picture>
 <!-- star-history:end -->
