@@ -69,7 +69,7 @@ enum FossAvatarSize {
 /// FossAvatar(
 ///   image: NetworkImage('https://example.com/v.png'),
 ///   fallback: const Text('VL'),
-///   semanticsLabel: 'Violet Light',
+///   semanticLabel: 'Violet Light',
 /// );
 /// ```
 class FossAvatar extends StatelessWidget {
@@ -81,7 +81,7 @@ class FossAvatar extends StatelessWidget {
     this.image,
     this.fallback,
     this.size = FossAvatarSize.md,
-    this.semanticsLabel,
+    this.semanticLabel,
     this.style,
     super.key,
   });
@@ -98,7 +98,7 @@ class FossAvatar extends StatelessWidget {
   final FossAvatarSize size;
 
   /// Accessibility name for the avatar. When null the avatar is decorative.
-  final String? semanticsLabel;
+  final String? semanticLabel;
 
   /// Per-instance visual overrides.
   final FossAvatarStyle? style;
@@ -126,7 +126,7 @@ class FossAvatar extends StatelessWidget {
 
     // A labelled avatar exposes one image node; unlabelled it is decorative
     // and contributes no semantics, so the monogram never announces.
-    final label = semanticsLabel;
+    final label = semanticLabel;
     if (label == null) return ExcludeSemantics(child: avatar);
     return Semantics(
       image: true,

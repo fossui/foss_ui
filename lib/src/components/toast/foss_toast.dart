@@ -6,9 +6,9 @@ part 'foss_toast_style.dart';
 
 /// The kind of a [FossToast]: drives the leading glyph, its tint, and whether
 /// the toast auto-dismisses.
-enum FossToastType {
+enum FossToastVariant {
   /// A plain notification with no status glyph.
-  normal,
+  neutral,
 
   /// A pending operation: shows a spinner and persists until updated.
   loading,
@@ -42,7 +42,7 @@ enum FossToastType {
 ///
 /// One transient notification. Enqueue it with `showFossToast` or a
 /// `FossToastController`; the surface stays on the `popover` role for every
-/// [type], which tints only the leading glyph.
+/// [variant], which tints only the leading glyph.
 ///
 /// {@macro foss.customize}
 ///
@@ -52,7 +52,7 @@ enum FossToastType {
 /// ```dart
 /// showFossToast(
 ///   context,
-///   const FossToast(type: FossToastType.success, title: Text('Saved')),
+///   const FossToast(variant: FossToastVariant.success, title: Text('Saved')),
 /// );
 /// ```
 @immutable
@@ -63,7 +63,7 @@ class FossToast {
   const FossToast({
     this.title,
     this.description,
-    this.type = FossToastType.normal,
+    this.variant = FossToastVariant.neutral,
     this.icon,
     this.action,
     this.duration,
@@ -76,17 +76,17 @@ class FossToast {
   /// The description below the title.
   final Widget? description;
 
-  /// The kind of toast. Defaults to [FossToastType.normal].
-  final FossToastType type;
+  /// The kind of toast. Defaults to [FossToastVariant.neutral].
+  final FossToastVariant variant;
 
   /// Overrides the default leading glyph (or the loading spinner). Null hides
-  /// the leading slot for [FossToastType.normal].
+  /// the leading slot for [FossToastVariant.neutral].
   final Widget? icon;
 
   /// An optional trailing action.
   final Widget? action;
 
-  /// Overrides the auto-dismiss delay. Ignored for [FossToastType.loading],
+  /// Overrides the auto-dismiss delay. Ignored for [FossToastVariant.loading],
   /// which persists.
   final Duration? duration;
 

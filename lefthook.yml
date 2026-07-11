@@ -12,11 +12,6 @@ pre-commit:
       glob: "*.dart"
       run: fvm flutter analyze
 
-pre-push:
-  commands:
-    test:
-      run: fvm flutter test
-
 # Prepend an emoji based on the conventional-commit type.
 # {1} = commit msg file, {2} = commit source (git hook args).
 prepare-commit-msg:

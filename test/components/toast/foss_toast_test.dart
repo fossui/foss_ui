@@ -32,7 +32,7 @@ void main() {
     showFossToast(
       ctx,
       const FossToast(
-        type: FossToastType.success,
+        variant: FossToastVariant.success,
         title: Text('Saved'),
         duration: Duration(milliseconds: 100),
       ),
@@ -52,7 +52,10 @@ void main() {
     await tester.pumpWidget(host());
 
     final id = FossToastScope.of(ctx).show(
-      const FossToast(type: FossToastType.loading, title: Text('Uploading')),
+      const FossToast(
+        variant: FossToastVariant.loading,
+        title: Text('Uploading'),
+      ),
     );
     await tester.pump();
     await tester.pump(const Duration(seconds: 6));
@@ -61,7 +64,7 @@ void main() {
     FossToastScope.of(ctx).update(
       id,
       const FossToast(
-        type: FossToastType.success,
+        variant: FossToastVariant.success,
         title: Text('Uploaded'),
         duration: Duration(milliseconds: 100),
       ),
@@ -101,15 +104,15 @@ void main() {
     await tester.pumpWidget(host());
 
     const types = [
-      FossToastType.info,
-      FossToastType.warning,
-      FossToastType.error,
+      FossToastVariant.info,
+      FossToastVariant.warning,
+      FossToastVariant.error,
     ];
     // Only the frontmost toast shows its content, so raise each on its own.
     for (final type in types) {
       final id = FossToastScope.of(ctx).show(
         FossToast(
-          type: type,
+          variant: type,
           title: Text(type.name),
           description: const Text('details'),
         ),
@@ -131,7 +134,7 @@ void main() {
 
     for (var i = 0; i < FossToastController.maxVisible + 1; i++) {
       FossToastScope.of(ctx).show(
-        FossToast(type: FossToastType.loading, title: Text('toast $i')),
+        FossToast(variant: FossToastVariant.loading, title: Text('toast $i')),
       );
     }
     await tester.pump();
@@ -228,7 +231,7 @@ void main() {
     );
     for (var i = 0; i < FossToastController.maxVisible; i++) {
       FossToastScope.of(ctx).show(
-        FossToast(type: FossToastType.loading, title: Text('load $i')),
+        FossToast(variant: FossToastVariant.loading, title: Text('load $i')),
       );
     }
     await tester.pump();
@@ -283,7 +286,10 @@ void main() {
     // Only the frontmost toast renders its surface, so check each type as the
     // front rather than stacking both at once.
     final info = FossToastScope.of(ctx).show(
-      const FossToast(type: FossToastType.info, title: Text('info-toast')),
+      const FossToast(
+        variant: FossToastVariant.info,
+        title: Text('info-toast'),
+      ),
     );
     await tester.pumpAndSettle();
     expect(surfaceOf('info-toast').properties.liveRegion, isTrue);
@@ -292,7 +298,10 @@ void main() {
     await tester.pumpAndSettle();
 
     FossToastScope.of(ctx).show(
-      const FossToast(type: FossToastType.error, title: Text('error-toast')),
+      const FossToast(
+        variant: FossToastVariant.error,
+        title: Text('error-toast'),
+      ),
     );
     await tester.pumpAndSettle();
     expect(surfaceOf('error-toast').properties.liveRegion, isFalse);
@@ -304,7 +313,7 @@ void main() {
 
     FossToastScope.of(ctx).show(
       const FossToast(
-        type: FossToastType.info,
+        variant: FossToastVariant.info,
         icon: SizedBox(key: Key('custom-icon')),
         title: Text('x'),
       ),

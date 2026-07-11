@@ -207,7 +207,7 @@ class _PileToastState extends State<_PileToast> {
       setState(() => _shown = true);
       // Error toasts interrupt assertively; other types ride the surface's
       // polite live region. Only a plain-text message can be announced.
-      if (widget.toast.type == FossToastType.error) {
+      if (widget.toast.variant == FossToastVariant.error) {
         final message = _announcement(widget.toast);
         if (message != null) {
           unawaited(
@@ -353,7 +353,7 @@ class _ToastSurface extends StatelessWidget {
         )
         .merge(s?.descriptionStyle);
 
-    final leading = toast.icon ?? _leadingFor(toast.type, colors);
+    final leading = toast.icon ?? _leadingFor(toast.variant, colors);
     // The leading box matches the first text line's height so the glyph centers
     // on the line instead of top-aligning to the row.
     final firstLineStyle = toast.title != null ? titleStyle : descriptionStyle;
@@ -364,7 +364,7 @@ class _ToastSurface extends StatelessWidget {
       // Non-error toasts announce politely through the live region; an error is
       // announced assertively from initState, so it stays off the live region
       // to avoid a double read.
-      liveRegion: toast.type != FossToastType.error,
+      liveRegion: toast.variant != FossToastVariant.error,
       container: true,
       child: DefaultTextStyle(
         style: theme.typography.sm.copyWith(
@@ -456,32 +456,32 @@ String? _announcement(FossToast toast) {
   return parts.isEmpty ? null : parts.join('. ');
 }
 
-/// The default leading slot for [type], or null for [FossToastType.normal].
-Widget? _leadingFor(FossToastType type, FossColors colors) {
+/// The default leading slot for [type], or null for [FossToastVariant.neutral].
+Widget? _leadingFor(FossToastVariant type, FossColors colors) {
   switch (type) {
-    case FossToastType.normal:
+    case FossToastVariant.neutral:
       return null;
-    case FossToastType.loading:
+    case FossToastVariant.loading:
       return FossSpinner(size: _iconSize, color: colors.mutedForeground);
-    case FossToastType.info:
+    case FossToastVariant.info:
       return FossGlyphIcon(
         InfoGlyph(colors.info),
         size: _iconSize,
         semanticLabel: 'info',
       );
-    case FossToastType.success:
+    case FossToastVariant.success:
       return FossGlyphIcon(
         SuccessGlyph(colors.success),
         size: _iconSize,
         semanticLabel: 'success',
       );
-    case FossToastType.warning:
+    case FossToastVariant.warning:
       return FossGlyphIcon(
         WarningGlyph(colors.warning),
         size: _iconSize,
         semanticLabel: 'warning',
       );
-    case FossToastType.error:
+    case FossToastVariant.error:
       return FossGlyphIcon(
         ErrorGlyph(colors.destructive),
         size: _iconSize,

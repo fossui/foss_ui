@@ -286,13 +286,13 @@ void main() {
       );
     });
 
-    testWidgets('semanticsLabel replaces the read-in-place content', (
+    testWidgets('semanticLabel replaces the read-in-place content', (
       tester,
     ) async {
       final handle = tester.ensureSemantics();
       await tester.pumpWidget(
         host(
-          const FossBadge(label: Text('3'), semanticsLabel: '3 unread'),
+          const FossBadge(label: Text('3'), semanticLabel: '3 unread'),
         ),
       );
       expect(

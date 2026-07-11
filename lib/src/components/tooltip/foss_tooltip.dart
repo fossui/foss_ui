@@ -80,7 +80,7 @@ class FossTooltip extends StatefulWidget {
     this.side = FossTooltipSide.top,
     this.showDelay = const Duration(milliseconds: 500),
     this.hideDelay = Duration.zero,
-    this.semanticsLabel,
+    this.semanticLabel,
     this.style,
     super.key,
   });
@@ -103,7 +103,7 @@ class FossTooltip extends StatefulWidget {
   final Duration hideDelay;
 
   /// Overrides the announced text when it should differ from [message].
-  final String? semanticsLabel;
+  final String? semanticLabel;
 
   /// Per-instance visual overrides.
   final FossTooltipStyle? style;
@@ -259,7 +259,7 @@ class _FossTooltipState extends State<FossTooltip>
     );
 
     return Semantics(
-      tooltip: widget.semanticsLabel ?? widget.message,
+      tooltip: widget.semanticLabel ?? widget.message,
       child: OverlayPortal(
         controller: _portal,
         overlayChildBuilder: _buildOverlay,

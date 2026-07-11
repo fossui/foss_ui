@@ -48,7 +48,7 @@ const Duration _squishDuration = Duration(milliseconds: 100);
 /// through [onChanged] on a tap, a drag, or Space / Enter. Passing `null` to
 /// [onChanged] disables it (dims the control and drops the pointer), so there
 /// is no separate enabled flag. It carries no visible label; lay out the row
-/// around it and name it for assistive tech with [semanticsLabel].
+/// around it and name it for assistive tech with [semanticLabel].
 ///
 /// Colors, the track crossfade, and the thumb come from `context.fossTheme`;
 /// pass a [FossSwitchStyle] to [style] for a one-off.
@@ -61,7 +61,7 @@ const Duration _squishDuration = Duration(milliseconds: 100);
 /// ```dart
 /// FossSwitch(
 ///   value: wifiOn,
-///   semanticsLabel: 'Wi-Fi',
+///   semanticLabel: 'Wi-Fi',
 ///   onChanged: (on) => setState(() => wifiOn = on),
 /// );
 /// ```
@@ -72,7 +72,7 @@ class FossSwitch extends StatefulWidget {
   const FossSwitch({
     required this.value,
     this.onChanged,
-    this.semanticsLabel,
+    this.semanticLabel,
     this.style,
     super.key,
   });
@@ -85,7 +85,7 @@ class FossSwitch extends StatefulWidget {
   final ValueChanged<bool>? onChanged;
 
   /// Accessibility name for the toggle.
-  final String? semanticsLabel;
+  final String? semanticLabel;
 
   /// Per-instance overrides layered on the theme-resolved style.
   final FossSwitchStyle? style;
@@ -257,7 +257,7 @@ class _FossSwitchState extends State<FossSwitch> {
       child: Semantics(
         toggled: on,
         enabled: _enabled,
-        label: widget.semanticsLabel,
+        label: widget.semanticLabel,
         onTap: _enabled ? _toggle : null,
         child: control,
       ),

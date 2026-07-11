@@ -218,7 +218,7 @@ void main() {
       final handle = tester.ensureSemantics();
       await tester.pumpWidget(
         host(
-          const FossAvatar(fallback: Text('VL'), semanticsLabel: 'Vitalik'),
+          const FossAvatar(fallback: Text('VL'), semanticLabel: 'Vitalik'),
         ),
       );
       expect(

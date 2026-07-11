@@ -110,7 +110,7 @@ enum FossBadgeSize {
 /// badge. Colors, type, and radius come from `context.fossTheme`; pass a
 /// [FossBadgeStyle] for a one-off override.
 ///
-/// When the badge is the only carrier of meaning, pass [semanticsLabel] so
+/// When the badge is the only carrier of meaning, pass [semanticLabel] so
 /// assistive technology announces the state rather than the bare glyph.
 ///
 /// {@macro foss.customize}
@@ -134,7 +134,7 @@ class FossBadge extends StatelessWidget {
     this.size = FossBadgeSize.md,
     this.leading,
     this.trailing,
-    this.semanticsLabel,
+    this.semanticLabel,
     this.style,
     super.key,
   });
@@ -155,7 +155,7 @@ class FossBadge extends StatelessWidget {
   final Widget? trailing;
 
   /// Accessibility name that replaces the read-in-place content when set.
-  final String? semanticsLabel;
+  final String? semanticLabel;
 
   /// Per-instance visual overrides.
   final FossBadgeStyle? style;
@@ -212,10 +212,10 @@ class FossBadge extends StatelessWidget {
       ),
     );
 
-    if (semanticsLabel == null) return pill;
+    if (semanticLabel == null) return pill;
     return Semantics(
       container: true,
-      label: semanticsLabel,
+      label: semanticLabel,
       child: ExcludeSemantics(child: pill),
     );
   }

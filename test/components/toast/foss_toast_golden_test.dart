@@ -25,7 +25,7 @@ const _specs = <(String, List<FossToast>)>[
     'info',
     [
       FossToast(
-        type: FossToastType.info,
+        variant: FossToastVariant.info,
         title: Text('Link copied'),
         duration: _persist,
       ),
@@ -35,7 +35,7 @@ const _specs = <(String, List<FossToast>)>[
     'success',
     [
       FossToast(
-        type: FossToastType.success,
+        variant: FossToastVariant.success,
         title: Text('Changes saved'),
         description: Text('Your draft is up to date.'),
         action: _Undo(),
@@ -47,7 +47,7 @@ const _specs = <(String, List<FossToast>)>[
     'error',
     [
       FossToast(
-        type: FossToastType.error,
+        variant: FossToastVariant.error,
         title: Text('Upload failed'),
         description: Text('The file is larger than 10 MB.'),
         duration: _persist,
@@ -56,7 +56,7 @@ const _specs = <(String, List<FossToast>)>[
   ),
   (
     'loading',
-    [FossToast(type: FossToastType.loading, title: Text('Uploading'))],
+    [FossToast(variant: FossToastVariant.loading, title: Text('Uploading'))],
   ),
   (
     'pile',

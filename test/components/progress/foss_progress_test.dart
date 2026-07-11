@@ -189,12 +189,12 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets('falls back to semanticsLabel with no visible label', (
+    testWidgets('falls back to semanticLabel with no visible label', (
       tester,
     ) async {
       final handle = tester.ensureSemantics();
       await tester.pumpWidget(
-        host(const FossProgress(value: 0.4, semanticsLabel: 'Upload progress')),
+        host(const FossProgress(value: 0.4, semanticLabel: 'Upload progress')),
       );
       await tester.pumpAndSettle();
 

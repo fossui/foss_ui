@@ -313,13 +313,13 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets('semanticsLabel overrides the announced text', (tester) async {
+    testWidgets('semanticLabel overrides the announced text', (tester) async {
       final handle = tester.ensureSemantics();
       await tester.pumpWidget(
         host(
           FossTooltip(
             message: 'Copy',
-            semanticsLabel: 'Copy to clipboard',
+            semanticLabel: 'Copy to clipboard',
             child: triggerBox(key: triggerKey),
           ),
         ),

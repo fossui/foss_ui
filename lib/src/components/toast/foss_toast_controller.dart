@@ -45,7 +45,8 @@ class FossToastController extends ChangeNotifier {
   List<FossToastEntry> get entries => List.unmodifiable(_entries);
 
   /// Enqueues [toast] and returns its id. Schedules auto-dismiss once the toast
-  /// is visible, unless it is [FossToastType.loading] or its duration is zero.
+  /// is visible, unless it is [FossToastVariant.loading] or its duration is
+  /// zero.
   int show(FossToast toast) {
     final total = _totalFor(toast);
     final entry = FossToastEntry(id: _nextId++, toast: toast)
@@ -132,7 +133,7 @@ class FossToastController extends ChangeNotifier {
   }
 
   Duration? _totalFor(FossToast toast) {
-    if (toast.type == FossToastType.loading) return null;
+    if (toast.variant == FossToastVariant.loading) return null;
     final duration = toast.duration ?? defaultDuration;
     return duration <= Duration.zero ? null : duration;
   }

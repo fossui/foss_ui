@@ -113,7 +113,7 @@ void main() {
         host(
           FossSwitch(
             value: true,
-            semanticsLabel: 'Wi-Fi',
+            semanticLabel: 'Wi-Fi',
             onChanged: (_) {},
           ),
         ),
@@ -138,7 +138,7 @@ void main() {
     testWidgets('disabled announces the disabled toggle', (tester) async {
       final handle = tester.ensureSemantics();
       await tester.pumpWidget(
-        host(const FossSwitch(value: false, semanticsLabel: 'Wi-Fi')),
+        host(const FossSwitch(value: false, semanticLabel: 'Wi-Fi')),
       );
 
       expect(

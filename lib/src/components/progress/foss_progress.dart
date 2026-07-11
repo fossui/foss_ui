@@ -56,7 +56,7 @@ class FossProgress extends StatelessWidget {
     required this.value,
     this.label,
     this.valueLabel,
-    this.semanticsLabel,
+    this.semanticLabel,
     this.style,
     super.key,
   });
@@ -72,7 +72,7 @@ class FossProgress extends StatelessWidget {
   final String? valueLabel;
 
   /// Accessibility name for the bar when there is no visible [label].
-  final String? semanticsLabel;
+  final String? semanticLabel;
 
   /// Per-instance visual overrides.
   final FossProgressStyle? style;
@@ -124,7 +124,7 @@ class FossProgress extends StatelessWidget {
     return Semantics(
       container: true,
       role: SemanticsRole.progressBar,
-      label: label ?? semanticsLabel,
+      label: label ?? semanticLabel,
       // The progressbar role bounds the value; it runs 0..1 like the fraction,
       // and assistive tech announces the percentage from the range.
       value: fraction.toStringAsFixed(2),

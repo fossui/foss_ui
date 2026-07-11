@@ -1,6 +1,16 @@
 ## Unreleased
 
-A documentation pass. No API or behavior changes.
+A documentation pass, plus a few public API renames for naming consistency
+before the stable cut.
+
+### Changed
+
+* Toast naming now lines up with the other variant enums. `FossToastType` is
+  `FossToastVariant`, its `normal` case is `neutral`, and `FossToast` takes the
+  variant through `variant:` rather than `type:`.
+* The accessibility label parameter is spelled `semanticLabel` throughout.
+  `FossAvatar`, `FossBadge`, `FossProgress`, `FossSwitch`, and `FossTooltip` drop
+  the old `semanticsLabel` spelling to match the rest of the set.
 
 ### Improved
 

@@ -29,7 +29,7 @@ void main() {
     showFossToast(
       ctx,
       const FossToast(
-        type: FossToastType.info,
+        variant: FossToastVariant.info,
         title: Text('Heads up'),
         duration: Duration(minutes: 1),
       ),
