@@ -21,3 +21,5 @@ jobs:
       - uses: narayann7/star-history-action@v1
         with:
           repos: ${{ github.repository }}
+          # pub.dev renders plain-markdown PNG, not <picture>/SVG dark-mode.
+          readme-format: png

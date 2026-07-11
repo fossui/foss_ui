@@ -1,3 +1,14 @@
+## Unreleased
+
+A documentation pass. No API or behavior changes.
+
+### Improved
+
+* API docs carry more for every component: a per-theme preview image, links to
+  the documentation site and live playground, an explicit summary of what the
+  component does and does not do, sidebar grouping by category, and cross-links
+  between related components. Previews also show on hover over a constructor.
+
 ## 0.1.0-beta.3
 
 A quality pass over every component: accessibility, visual fidelity, touch

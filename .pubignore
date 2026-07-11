@@ -15,3 +15,9 @@ codecov.yml
 lefthook.yml
 CONTRIBUTING.md
 CODE_OF_CONDUCT.md
+
+# Internal maintainer notes. doc/categories/ and dartdoc_options.yaml stay: they
+# are dartdoc input. These are unreferenced prose that would otherwise ship unrendered.
+doc/components/
+doc/tools/
+doc/package-size.md

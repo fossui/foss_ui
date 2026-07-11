@@ -86,8 +86,5 @@ MIT. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
 ## Star History
 
 <!-- star-history:start -->
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/star-history/star-history-dark-20260711014430.svg">
-  <img alt="Star history" src="assets/star-history/star-history-light-20260711014430.svg">
-</picture>
+[![Star History](https://raw.githubusercontent.com/fossui/fossui/main/assets/star-history/star-history.png)](https://star-history.com/#fossui/fossui&Date)
 <!-- star-history:end -->
