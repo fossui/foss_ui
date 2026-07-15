@@ -187,8 +187,8 @@ class FossAutocomplete extends StatelessWidget {
 /// check when picked.
 ///
 /// Unlike [FossAutocomplete], the value is the selected item, not the raw text:
-/// pass [value] and rebuild on [onSelected]. Picking a row writes its label
-/// into the field and closes the popup. A null [onSelected] (or
+/// pass [value] and rebuild on [onChanged]. Picking a row writes its label
+/// into the field and closes the popup. A null [onChanged] (or
 /// `enabled: false`) disables the field.
 ///
 /// {@macro foss.customize}
@@ -200,7 +200,7 @@ class FossAutocomplete extends StatelessWidget {
 ///   label: 'Team',
 ///   hintText: 'Search teams',
 ///   value: team,
-///   onSelected: (v) => setState(() => team = v),
+///   onChanged: (v) => setState(() => team = v),
 ///   items: const [
 ///     FossComboboxItem(value: 'design', label: 'Design'),
 ///     FossComboboxItem(value: 'eng', label: 'Engineering'),
@@ -214,7 +214,7 @@ class FossCombobox<T> extends StatelessWidget {
   const FossCombobox({
     required this.items,
     this.value,
-    this.onSelected,
+    this.onChanged,
     this.focusNode,
     this.size = FossTextFieldSize.md,
     this.label,
@@ -237,7 +237,7 @@ class FossCombobox<T> extends StatelessWidget {
 
   /// Called with the picked value when a row is chosen. A null callback
   /// disables the field.
-  final ValueChanged<T?>? onSelected;
+  final ValueChanged<T?>? onChanged;
 
   /// Manages keyboard focus. Created and disposed internally when null.
   final FocusNode? focusNode;
@@ -254,7 +254,7 @@ class FossCombobox<T> extends StatelessWidget {
   /// When non-null, marks the field invalid and recolors its border.
   final String? errorText;
 
-  /// Whether the field accepts input. Disabled when false or [onSelected] is
+  /// Whether the field accepts input. Disabled when false or [onChanged] is
   /// null.
   final bool enabled;
 
@@ -282,7 +282,7 @@ class FossCombobox<T> extends StatelessWidget {
       label: label,
       hintText: hintText,
       errorText: errorText,
-      enabled: enabled && onSelected != null,
+      enabled: enabled && onChanged != null,
       showTrigger: true,
       showClear: showClear,
       startAddon: startAddon,
@@ -292,8 +292,8 @@ class FossCombobox<T> extends StatelessWidget {
       emptyText: emptyText,
       filter: filter ?? _defaultFilter,
       isSelected: (v) => v == value,
-      onPick: (item) => onSelected?.call(item.value),
-      onClear: () => onSelected?.call(null),
+      onPick: (item) => onChanged?.call(item.value),
+      onClear: () => onChanged?.call(null),
       style: style,
     );
   }
@@ -311,9 +311,9 @@ class FossCombobox<T> extends StatelessWidget {
 ///
 /// A combobox that holds several picks at once, shown as removable chips.
 ///
-/// The value is the set of selected items ([values]); rebuild on [onSelected].
+/// The value is the set of selected items ([values]); rebuild on [onChanged].
 /// Typing filters [items], picking toggles a chip and keeps the popup open, and
-/// Backspace on the empty input removes the last chip. A null [onSelected] (or
+/// Backspace on the empty input removes the last chip. A null [onChanged] (or
 /// `enabled: false`) disables the field.
 ///
 /// {@macro foss.customize}
@@ -325,7 +325,7 @@ class FossCombobox<T> extends StatelessWidget {
 ///   label: 'Tags',
 ///   hintText: 'Add tags',
 ///   values: tags,
-///   onSelected: (v) => setState(() => tags = v),
+///   onChanged: (v) => setState(() => tags = v),
 ///   items: const [
 ///     FossComboboxItem(value: 'design', label: 'Design'),
 ///     FossComboboxItem(value: 'eng', label: 'Engineering'),
@@ -339,7 +339,7 @@ class FossMultiCombobox<T> extends StatelessWidget {
   const FossMultiCombobox({
     required this.items,
     this.values = const {},
-    this.onSelected,
+    this.onChanged,
     this.focusNode,
     this.size = FossTextFieldSize.md,
     this.label,
@@ -362,7 +362,7 @@ class FossMultiCombobox<T> extends StatelessWidget {
 
   /// Called with the next set when a pick is toggled. A null callback disables
   /// the field.
-  final ValueChanged<Set<T>>? onSelected;
+  final ValueChanged<Set<T>>? onChanged;
 
   /// Manages keyboard focus. Created and disposed internally when null.
   final FocusNode? focusNode;
@@ -379,7 +379,7 @@ class FossMultiCombobox<T> extends StatelessWidget {
   /// When non-null, marks the field invalid and recolors its border.
   final String? errorText;
 
-  /// Whether the field accepts input. Disabled when false or [onSelected] is
+  /// Whether the field accepts input. Disabled when false or [onChanged] is
   /// null.
   final bool enabled;
 
@@ -408,12 +408,12 @@ class FossMultiCombobox<T> extends StatelessWidget {
       label: label,
       hintText: hintText,
       errorText: errorText,
-      enabled: enabled && onSelected != null,
+      enabled: enabled && onChanged != null,
       startAddon: startAddon,
       emptyText: emptyText,
       removeLabel: removeLabel,
       filter: filter ?? _defaultFilter,
-      onChanged: (next) => onSelected?.call(next),
+      onChanged: (next) => onChanged?.call(next),
       style: style,
     );
   }
@@ -447,6 +447,7 @@ _ComboboxVisuals _apply(_ComboboxVisuals base, FossComboboxStyle? override) {
   return base.copyWith(
     borderRadius: override.borderRadius,
     textStyle: override.textStyle,
+    popupBorderColor: override.borderColor,
   );
 }
 
@@ -480,18 +481,21 @@ class _ComboboxVisuals {
   final Color highlightColor;
   final Color highlightForeground;
 
-  _ComboboxVisuals copyWith({double? borderRadius, TextStyle? textStyle}) =>
-      _ComboboxVisuals(
-        foreground: foreground,
-        mutedForeground: mutedForeground,
-        borderRadius: borderRadius ?? this.borderRadius,
-        rowRadius: rowRadius,
-        textStyle: textStyle ?? this.textStyle,
-        iconSize: iconSize,
-        popupColor: popupColor,
-        popupBorderColor: popupBorderColor,
-        popupShadow: popupShadow,
-        highlightColor: highlightColor,
-        highlightForeground: highlightForeground,
-      );
+  _ComboboxVisuals copyWith({
+    double? borderRadius,
+    TextStyle? textStyle,
+    Color? popupBorderColor,
+  }) => _ComboboxVisuals(
+    foreground: foreground,
+    mutedForeground: mutedForeground,
+    borderRadius: borderRadius ?? this.borderRadius,
+    rowRadius: rowRadius,
+    textStyle: textStyle ?? this.textStyle,
+    iconSize: iconSize,
+    popupColor: popupColor,
+    popupBorderColor: popupBorderColor ?? this.popupBorderColor,
+    popupShadow: popupShadow,
+    highlightColor: highlightColor,
+    highlightForeground: highlightForeground,
+  );
 }
