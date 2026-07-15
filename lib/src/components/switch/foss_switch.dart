@@ -218,7 +218,7 @@ class _FossSwitchState extends State<FossSwitch> {
       enabled: _enabled,
       mouseCursor: _enabled
           ? SystemMouseCursors.click
-          : SystemMouseCursors.forbidden,
+          : SystemMouseCursors.basic,
       onShowFocusHighlight: (value) =>
           _states.update(WidgetState.focused, value),
       actions: <Type, Action<Intent>>{

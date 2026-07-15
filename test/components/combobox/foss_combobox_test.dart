@@ -210,7 +210,7 @@ void main() {
     testWidgets('shows the selected value label', (tester) async {
       await tester.pumpWidget(
         host(
-          FossCombobox<String>(value: 'b', items: _items, onSelected: (_) {}),
+          FossCombobox<String>(value: 'b', items: _items, onChanged: (_) {}),
         ),
       );
 
@@ -227,7 +227,7 @@ void main() {
           FossCombobox<String>(
             items: _items,
             focusNode: focus,
-            onSelected: (v) => picked = v,
+            onChanged: (v) => picked = v,
           ),
         ),
       );
@@ -250,7 +250,7 @@ void main() {
           FossCombobox<String>(
             items: _items,
             focusNode: focus,
-            onSelected: (_) => called = true,
+            onChanged: (_) => called = true,
           ),
         ),
       );
@@ -263,7 +263,7 @@ void main() {
       expect(called, isFalse);
     });
 
-    testWidgets('a null onSelected disables the field', (tester) async {
+    testWidgets('a null onChanged disables the field', (tester) async {
       final focus = FocusNode();
       addTearDown(focus.dispose);
       await tester.pumpWidget(
@@ -286,7 +286,7 @@ void main() {
             value: 'b',
             items: _items,
             showClear: true,
-            onSelected: (v) => picked = v,
+            onChanged: (v) => picked = v,
           ),
         ),
       );
@@ -303,7 +303,7 @@ void main() {
 
     testWidgets('the trigger opens then closes the popup', (tester) async {
       await tester.pumpWidget(
-        host(FossCombobox<String>(items: _items, onSelected: (_) {})),
+        host(FossCombobox<String>(items: _items, onChanged: (_) {})),
       );
 
       await tester.tap(_byPainter('ChevronUpDownGlyph'));
@@ -325,7 +325,7 @@ void main() {
           FossCombobox<String>(
             items: _items,
             focusNode: focus,
-            onSelected: (_) {},
+            onChanged: (_) {},
           ),
         ),
       );
@@ -355,7 +355,7 @@ void main() {
           FossCombobox<String>(
             items: _items,
             focusNode: focus,
-            onSelected: (_) {},
+            onChanged: (_) {},
           ),
         ),
       );
@@ -380,7 +380,7 @@ void main() {
           FossCombobox<String>(
             items: _iconItems,
             focusNode: focus,
-            onSelected: (_) {},
+            onChanged: (_) {},
           ),
         ),
       );
@@ -401,7 +401,7 @@ void main() {
           FossCombobox<String>(
             items: _items,
             focusNode: focus,
-            onSelected: (_) {},
+            onChanged: (_) {},
           ),
         ),
       );
@@ -444,7 +444,7 @@ void main() {
           FossCombobox<String>(
             items: _items,
             focusNode: focus,
-            onSelected: (v) => picked = v,
+            onChanged: (v) => picked = v,
           ),
         ),
       );
@@ -469,7 +469,7 @@ void main() {
             items: _items,
             focusNode: focus,
             filter: (label, query) => label.startsWith(query),
-            onSelected: (_) {},
+            onChanged: (_) {},
           ),
         ),
       );
@@ -519,7 +519,7 @@ void main() {
       expect(find.text('Design'), findsOneWidget);
     });
 
-    testWidgets('a null onSelected disables the field', (tester) async {
+    testWidgets('a null onChanged disables the field', (tester) async {
       final focus = FocusNode();
       addTearDown(focus.dispose);
       await tester.pumpWidget(
@@ -783,6 +783,6 @@ class _MultiHostState extends State<_MultiHost> {
     errorText: widget.errorText,
     startAddon: widget.startAddon,
     size: widget.size,
-    onSelected: (v) => setState(() => _values = v),
+    onChanged: (v) => setState(() => _values = v),
   );
 }

@@ -1,0 +1,175 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: 3.41.9
+
+jobs:
+  verify:
+    name: Format, analyze, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      format: ${{ steps.format.outcome }}
+      analyze: ${{ steps.analyze.outcome }}
+      tests: ${{ steps.test.outputs.summary }}
+      test_outcome: ${{ steps.test.outcome }}
+      coverage: ${{ steps.cov.outputs.pct }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Cache pub packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-${{ hashFiles('pubspec.yaml') }}
+          restore-keys: pub-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Steps carry ids and run to completion (if: always()) so the PR report
+      # job can read every result even when an earlier gate fails; a failed step
+      # still fails the job, keeping the check red.
+      - name: Verify formatting
+        id: format
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze (strict)
+        id: analyze
+        if: always()
+        run: flutter analyze --fatal-infos
+
+      - name: Test with coverage
+        id: test
+        if: always()
+        run: |
+          set +e
+          sh scripts/dev/coverage.sh | tee test.log
+          code=${PIPESTATUS[0]}
+          echo "summary=$(grep -oE '\+[0-9]+ ?(-[0-9]+)?' test.log | tail -1)" >> "$GITHUB_OUTPUT"
+          exit "$code"
+
+      - name: Coverage percent
+        id: cov
+        if: always()
+        run: |
+          if [ -f coverage/lcov.info ]; then
+            pct=$(awk -F, '/^DA:/{t++; if($2>0)h++} END{if(t)printf "%.1f", h/t*100}' coverage/lcov.info)
+          fi
+          echo "pct=${pct:-}" >> "$GITHUB_OUTPUT"
+
+  goldens:
+    name: Goldens
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Cache pub packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-${{ hashFiles('pubspec.yaml') }}
+          restore-keys: pub-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # CI is set by GitHub Actions, so only the committed Ahem flavor renders.
+      - name: Verify goldens
+        run: sh scripts/dev/goldens.sh
+
+  score:
+    name: Pub score
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      points: ${{ steps.points.outputs.points }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Cache pub packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-${{ hashFiles('pubspec.yaml') }}
+          restore-keys: pub-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Guard the pub.dev score against regression. Threshold 10 tolerates one
+      # category slipping without failing the build; run under the pinned SDK so
+      # the formatter matches the committed tall-style source.
+      - name: Score with pana
+        id: pana
+        run: |
+          dart pub global activate pana
+          set +e
+          dart pub global run pana --no-warning --exit-code-threshold 10 | tee pana.log
+          code=${PIPESTATUS[0]}
+          exit "$code"
+
+      - name: Extract points
+        id: points
+        if: always()
+        run: |
+          points=$(grep -oE 'Points: [0-9]+/[0-9]+' pana.log | tail -1 | grep -oE '[0-9]+/[0-9]+')
+          echo "points=$points" >> "$GITHUB_OUTPUT"
+
+  report:
+    name: PR report
+    needs: [verify, score]
+    # Always runs so the comment reflects failures too; scoped to PRs since the
+    # comment target only exists there. Skipped for pushes to main.
+    if: ${{ always() && github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: ci-report
+          message: |
+            ## CI report
+
+            | Check | Result |
+            | --- | --- |
+            | Format | ${{ needs.verify.outputs.format == 'success' && '✅' || '❌' }} |
+            | Analyze | ${{ needs.verify.outputs.analyze == 'success' && '✅' || '❌' }} |
+            | Tests | ${{ needs.verify.outputs.test_outcome == 'success' && '✅' || '❌' }} ${{ needs.verify.outputs.tests }} |
+            | Coverage | ${{ needs.verify.outputs.coverage }}% |
+            | Pub score | ${{ needs.score.outputs.points }} |
+
+            [Full coverage report](https://fossui.github.io/fossui)

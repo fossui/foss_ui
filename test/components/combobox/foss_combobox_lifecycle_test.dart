@@ -28,14 +28,14 @@ void main() {
     testWidgets('a changed value syncs the field text', (tester) async {
       await tester.pumpWidget(
         _host(
-          FossCombobox<String>(items: _items, value: 'a', onSelected: (_) {}),
+          FossCombobox<String>(items: _items, value: 'a', onChanged: (_) {}),
         ),
       );
       expect(find.text('Design'), findsOneWidget);
 
       await tester.pumpWidget(
         _host(
-          FossCombobox<String>(items: _items, value: 'b', onSelected: (_) {}),
+          FossCombobox<String>(items: _items, value: 'b', onChanged: (_) {}),
         ),
       );
       await tester.pump();

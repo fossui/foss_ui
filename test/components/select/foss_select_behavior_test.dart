@@ -95,7 +95,7 @@ void main() {
             placeholder: 'Pick',
             items: _items,
             values: const {'a', 'b'},
-            selectionLabel: (count) => '$count chosen',
+            selectionLabelBuilder: (count) => '$count chosen',
             onChanged: (_) {},
           ),
         ),

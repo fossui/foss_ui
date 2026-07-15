@@ -108,8 +108,9 @@ class FossSelect<T> extends StatelessWidget {
   final T? value;
 
   /// Called with the picked value when a row is chosen. A null callback
-  /// disables the field.
-  final ValueChanged<T?>? onChanged;
+  /// disables the field. The field has no clear affordance, so this never
+  /// fires with null.
+  final ValueChanged<T>? onChanged;
 
   /// Text shown in the trigger when [value] is null.
   final String? placeholder;
@@ -162,19 +163,19 @@ _SelectVisuals _resolve(FossThemeData theme, FossSelectSize size) {
   final (minHeight, padding, textStyle, gap) = switch (size) {
     FossSelectSize.sm => (
       32.0,
-      EdgeInsets.symmetric(horizontal: theme.spacing(2.5) - 1),
+      EdgeInsets.symmetric(horizontal: theme.spacing(2.5)),
       theme.typography.sm,
       theme.spacing(1.5),
     ),
     FossSelectSize.md => (
       36.0,
-      EdgeInsets.symmetric(horizontal: theme.spacing(3) - 1),
+      EdgeInsets.symmetric(horizontal: theme.spacing(3)),
       theme.typography.base,
       theme.spacing(2),
     ),
     FossSelectSize.lg => (
       40.0,
-      EdgeInsets.symmetric(horizontal: theme.spacing(3) - 1),
+      EdgeInsets.symmetric(horizontal: theme.spacing(3)),
       theme.typography.base,
       theme.spacing(2),
     ),

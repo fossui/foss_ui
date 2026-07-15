@@ -83,7 +83,7 @@ void main() {
               return FossCombobox<String>(
                 items: _items,
                 value: value,
-                onSelected: (_) {},
+                onChanged: (_) {},
               );
             },
           ),
@@ -107,7 +107,7 @@ void main() {
               return FossCombobox<String>(
                 items: _items,
                 value: value,
-                onSelected: (_) {},
+                onChanged: (_) {},
               );
             },
           ),
@@ -133,7 +133,7 @@ void main() {
             items: _items,
             value: 'a',
             focusNode: focus,
-            onSelected: (_) {},
+            onChanged: (_) {},
           ),
         ),
       );
@@ -157,7 +157,7 @@ void main() {
           FossCombobox<String>(
             items: _items,
             emptyText: 'Nothing here',
-            onSelected: (_) {},
+            onChanged: (_) {},
           ),
         ),
       );
@@ -180,7 +180,7 @@ void main() {
           FossCombobox<String>(
             items: _items,
             style: const FossComboboxStyle(backgroundColor: fill),
-            onSelected: (_) {},
+            onChanged: (_) {},
           ),
         ),
       );
@@ -194,7 +194,7 @@ void main() {
     testWidgets('the trigger button carries a label', (tester) async {
       final handle = tester.ensureSemantics();
       await tester.pumpWidget(
-        host(FossCombobox<String>(items: _items, onSelected: (_) {})),
+        host(FossCombobox<String>(items: _items, onChanged: (_) {})),
       );
 
       expect(_hasLabel(tester, 'Show options'), isTrue);
@@ -209,7 +209,7 @@ void main() {
             items: _items,
             value: 'a',
             showClear: true,
-            onSelected: (_) {},
+            onChanged: (_) {},
           ),
         ),
       );
@@ -229,7 +229,7 @@ void main() {
           FossCombobox<String>(
             items: _items,
             focusNode: focus,
-            onSelected: (_) {},
+            onChanged: (_) {},
           ),
         ),
       );
@@ -251,7 +251,7 @@ void main() {
           FossCombobox<String>(
             items: _items,
             focusNode: focus,
-            onSelected: (_) {},
+            onChanged: (_) {},
           ),
         ),
       );
@@ -275,7 +275,7 @@ void main() {
             items: _items,
             values: const {'a'},
             removeLabel: 'Delete tag',
-            onSelected: (_) {},
+            onChanged: (_) {},
           ),
         ),
       );

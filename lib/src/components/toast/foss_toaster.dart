@@ -24,8 +24,10 @@ const Cubic _slideCurve = Cubic(0.22, 1, 0.36, 1);
 const double _rearScaleStep = 0.1;
 
 /// Depth tint blended over the popover fill per rear card index, so the cards
-/// behind read as set back.
-const double _rearDarken = 0.04;
+/// behind read as set back. Light darkens gently; dark leans harder to stay
+/// legible against the near-black surface.
+const double _rearDarkenLight = 0.01;
+const double _rearDarkenDark = 0.06;
 
 /// Shares a [FossToastController] with the subtree. Read it with
 /// [FossToastScope.of]; provided by a [FossToaster].
@@ -48,6 +50,7 @@ class FossToastScope extends InheritedNotifier<FossToastController> {
   }
 }
 
+/// {@category Overlays}
 /// Hosts transient toasts over its [child]. Mount it once near the app root,
 /// above everything that needs to raise a toast.
 ///
@@ -94,10 +97,41 @@ class _FossToasterState extends State<FossToaster> {
   }
 }
 
-/// Raises [toast] on the nearest [FossToaster] and returns its id, usable with
-/// `FossToastScope.of(context).update`/`dismiss`.
-int showFossToast(BuildContext context, FossToast toast) =>
-    FossToastScope.of(context).show(toast);
+/// A handle to a raised toast, returned by [showFossToast]. Holds the toast's
+/// id and its toaster so the caller can [dismiss] it early or [update] its
+/// message without threading a [BuildContext] back in.
+///
+/// ```dart
+/// final toast = showFossToast(context, const FossToast(
+///   variant: FossToastVariant.loading,
+///   title: Text('Saving'),
+/// ));
+/// await save();
+/// toast.update(const FossToast(
+///   variant: FossToastVariant.success,
+///   title: Text('Saved'),
+/// ));
+/// ```
+class FossToastHandle {
+  const FossToastHandle._(this._controller, this._id);
+
+  final FossToastController _controller;
+  final int _id;
+
+  /// Removes the toast now. A no-op once it has already left the screen.
+  void dismiss() => _controller.dismiss(_id);
+
+  /// Replaces the toast's message in place and restarts its timer, the
+  /// loading-to-status flip. A no-op once the toast is gone.
+  void update(FossToast toast) => _controller.update(_id, toast);
+}
+
+/// Raises [toast] on the nearest [FossToaster] and returns a [FossToastHandle]
+/// to dismiss or update it.
+FossToastHandle showFossToast(BuildContext context, FossToast toast) {
+  final controller = FossToastScope.of(context);
+  return FossToastHandle._(controller, controller.show(toast));
+}
 
 class _ToastViewport extends StatefulWidget {
   const _ToastViewport({required this.controller});
@@ -193,8 +227,17 @@ class _PileToast extends StatefulWidget {
 
 class _PileToastState extends State<_PileToast> {
   bool _shown = false;
+  bool _dismissed = false;
 
   bool get _isFront => widget.depth == 0;
+
+  // The front nests two Dismissibles; a diagonal fling can cross both
+  // thresholds, so collapse the pair to a single dismiss.
+  void _dismiss() {
+    if (_dismissed) return;
+    _dismissed = true;
+    widget.onDismiss();
+  }
 
   @override
   void initState() {
@@ -288,12 +331,12 @@ class _PileToastState extends State<_PileToast> {
       key: const ValueKey<String>('foss-toast-h'),
       direction: _isFront ? DismissDirection.horizontal : DismissDirection.none,
       resizeDuration: null,
-      onDismissed: (_) => widget.onDismiss(),
+      onDismissed: (_) => _dismiss(),
       child: Dismissible(
         key: const ValueKey<String>('foss-toast-v'),
         direction: _isFront ? DismissDirection.down : DismissDirection.none,
         resizeDuration: null,
-        onDismissed: (_) => widget.onDismiss(),
+        onDismissed: (_) => _dismiss(),
         child: card,
       ),
     );
@@ -316,7 +359,9 @@ class _RearSurface extends StatelessWidget {
       decoration: _toastDecoration(
         theme,
         fill: Color.alphaBlend(
-          colors.foreground.withValues(alpha: _rearDarken * depth),
+          colors.foreground.withValues(
+            alpha: (colors.isDark ? _rearDarkenDark : _rearDarkenLight) * depth,
+          ),
           colors.popover,
         ),
         border: colors.border,
@@ -399,7 +444,7 @@ class _ToastSurface extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
-                      spacing: sp(1),
+                      spacing: sp(0.5),
                       children: [
                         if (toast.title case final title?)
                           DefaultTextStyle.merge(

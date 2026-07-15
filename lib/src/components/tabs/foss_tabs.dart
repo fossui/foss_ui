@@ -159,7 +159,7 @@ class _FossTabsState<T> extends State<FossTabs<T>> {
   @override
   void initState() {
     super.initState();
-    _internal = widget.initialValue ?? _firstEnabledValue();
+    _internal = _validInitial() ?? _firstEnabledValue();
   }
 
   @override
@@ -187,6 +187,17 @@ class _FossTabsState<T> extends State<FossTabs<T>> {
   T? _firstEnabledValue() {
     for (final tab in widget.tabs) {
       if (tab.enabled) return tab.value;
+    }
+    return null;
+  }
+
+  // Honors [initialValue] only when it names an enabled tab; an absent or
+  // disabled value would seed a selection with no panel to show.
+  T? _validInitial() {
+    final initial = widget.initialValue;
+    if (initial == null) return null;
+    for (final tab in widget.tabs) {
+      if (tab.value == initial) return tab.enabled ? initial : null;
     }
     return null;
   }
@@ -349,10 +360,11 @@ class _FossTabsState<T> extends State<FossTabs<T>> {
             children: tabs,
           );
 
-    final indicator = _activeRect == null
+    final activeRect = _activeRect;
+    final indicator = activeRect == null
         ? null
         : _TabIndicator(
-            rect: _activeRect!,
+            rect: activeRect,
             variant: widget.variant,
             horizontal: _horizontal,
             ltr: ltr,

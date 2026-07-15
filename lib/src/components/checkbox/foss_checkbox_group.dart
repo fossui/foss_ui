@@ -9,6 +9,7 @@ enum FossCheckboxGroupVariant {
   card,
 }
 
+/// {@category Inputs}
 /// Lays out a set of [FossCheckboxItem] options as a multi-select group.
 ///
 /// Holds the checked [values] and the [onChanged] callback and shares them with
@@ -76,7 +77,7 @@ class FossCheckboxGroup<T> extends StatelessWidget {
     final active = enabled && onChanged != null;
     final hasError = errorText != null;
 
-    return FossCheckboxGroupScope<T>(
+    return _FossCheckboxGroupScope<T>(
       values: values,
       onChanged: onChanged,
       enabled: active,
@@ -107,7 +108,7 @@ class FossCheckboxGroup<T> extends StatelessWidget {
               child: Text(
                 text,
                 style: theme.typography.xs.copyWith(
-                  color: colors.destructive,
+                  color: colors.destructiveForeground,
                 ),
               ),
             ),
@@ -164,7 +165,7 @@ class FossCheckboxItem<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final group = FossCheckboxGroupScope.of<T>(context);
+    final group = _FossCheckboxGroupScope.of<T>(context);
     if (group == null) {
       throw FlutterError(
         'FossCheckboxItem<$T> must be placed inside a FossCheckboxGroup<$T>.',
@@ -200,11 +201,11 @@ class FossCheckboxItem<T> extends StatelessWidget {
 }
 
 /// Shares a [FossCheckboxGroup]'s selection state with its [FossCheckboxItem]
-/// descendants. Read it with [FossCheckboxGroupScope.of].
-class FossCheckboxGroupScope<T> extends InheritedWidget {
+/// descendants. Read it with [_FossCheckboxGroupScope.of].
+class _FossCheckboxGroupScope<T> extends InheritedWidget {
   /// Creates the scope. Provided by [FossCheckboxGroup]; not constructed
   /// directly.
-  const FossCheckboxGroupScope({
+  const _FossCheckboxGroupScope({
     required this.values,
     required this.onChanged,
     required this.enabled,
@@ -231,11 +232,11 @@ class FossCheckboxGroupScope<T> extends InheritedWidget {
 
   /// The nearest group scope of value type [T] above [context], or null when a
   /// [FossCheckboxItem] is used outside a [FossCheckboxGroup].
-  static FossCheckboxGroupScope<T>? of<T>(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<FossCheckboxGroupScope<T>>();
+  static _FossCheckboxGroupScope<T>? of<T>(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_FossCheckboxGroupScope<T>>();
 
   @override
-  bool updateShouldNotify(FossCheckboxGroupScope<T> oldWidget) =>
+  bool updateShouldNotify(_FossCheckboxGroupScope<T> oldWidget) =>
       !setEquals(values, oldWidget.values) ||
       enabled != oldWidget.enabled ||
       hasError != oldWidget.hasError ||

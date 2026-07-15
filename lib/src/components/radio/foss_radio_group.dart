@@ -9,6 +9,7 @@ enum FossRadioGroupVariant {
   card,
 }
 
+/// {@category Inputs}
 /// Lays out a set of [FossRadio] options as a single-choice group.
 ///
 /// Holds the selected [groupValue] and the [onChanged] callback and shares them
@@ -83,7 +84,7 @@ class FossRadioGroup<T> extends StatelessWidget {
       onChanged: (value) {
         if (value != null) onChanged?.call(value);
       },
-      child: FossRadioGroupScope<T>(
+      child: _FossRadioGroupScope<T>(
         enabled: active,
         hasError: hasError,
         variant: variant,
@@ -112,7 +113,7 @@ class FossRadioGroup<T> extends StatelessWidget {
                 child: Text(
                   text,
                   style: theme.typography.xs.copyWith(
-                    color: colors.destructive,
+                    color: colors.destructiveForeground,
                   ),
                 ),
               ),
@@ -125,10 +126,10 @@ class FossRadioGroup<T> extends StatelessWidget {
 
 /// Shares a [FossRadioGroup]'s enabled, error, and variant state with its
 /// [FossRadio] descendants. Selection and focus flow through the enclosing
-/// [RadioGroup]; read this scope with [FossRadioGroupScope.of].
-class FossRadioGroupScope<T> extends InheritedWidget {
+/// [RadioGroup]; read this scope with [_FossRadioGroupScope.of].
+class _FossRadioGroupScope<T> extends InheritedWidget {
   /// Creates the scope. Provided by [FossRadioGroup]; not constructed directly.
-  const FossRadioGroupScope({
+  const _FossRadioGroupScope({
     required this.enabled,
     required this.hasError,
     required this.variant,
@@ -147,11 +148,11 @@ class FossRadioGroupScope<T> extends InheritedWidget {
 
   /// The nearest group scope of value type [T] above [context], or null when a
   /// [FossRadio] is used outside a [FossRadioGroup].
-  static FossRadioGroupScope<T>? of<T>(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<FossRadioGroupScope<T>>();
+  static _FossRadioGroupScope<T>? of<T>(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_FossRadioGroupScope<T>>();
 
   @override
-  bool updateShouldNotify(FossRadioGroupScope<T> oldWidget) =>
+  bool updateShouldNotify(_FossRadioGroupScope<T> oldWidget) =>
       enabled != oldWidget.enabled ||
       hasError != oldWidget.hasError ||
       variant != oldWidget.variant;
