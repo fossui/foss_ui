@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 
 const double _ringWidth = 3;
@@ -131,7 +133,7 @@ class FossFieldBox extends StatelessWidget {
       content = CustomPaint(
         foregroundPainter: _RimPainter(
           color: isDark ? _rimDark : _rimLight,
-          radius: borderRadius - 1,
+          radius: math.max(0, borderRadius - 1),
           topLit: isDark,
         ),
         child: content,

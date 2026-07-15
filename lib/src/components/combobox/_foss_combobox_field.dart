@@ -160,10 +160,22 @@ class _FossComboboxFieldState<T> extends State<_FossComboboxField<T>>
     );
   }
 
+  // The label of the committed selection, or null when nothing is selected.
+  // Autocomplete never selects, so this stays null there.
+  String? get _selectedLabel {
+    for (final o in widget.options) {
+      if (widget.isSelected(o.value)) return o.label;
+    }
+    return null;
+  }
+
   @override
   List<FossComboboxItem<T>> get filteredOptions {
     final query = _controller.text;
-    if (query.isEmpty) return widget.options;
+    // A pick writes the selected label into the field, so on reopen the query
+    // equals the selection; treat that as no query rather than self-filtering
+    // to the one chosen row.
+    if (query.isEmpty || query == _selectedLabel) return widget.options;
     return [
       for (final o in widget.options)
         if (widget.filter(o.label, query)) o,

@@ -336,10 +336,12 @@ class _FossSliderState extends State<FossSlider> {
       value: _format(widget.value),
       increasedValue: _format(_snap(widget.value + _keyboardStep)),
       decreasedValue: _format(_snap(widget.value - _keyboardStep)),
-      onIncrease: _enabled
+      // Drop the action at the bound it cannot move past, so a screen reader
+      // never announces an unchanged value at the min or max.
+      onIncrease: _enabled && widget.value < widget.max
           ? () => _emitKeyboard(widget.value + _keyboardStep)
           : null,
-      onDecrease: _enabled
+      onDecrease: _enabled && widget.value > widget.min
           ? () => _emitKeyboard(widget.value - _keyboardStep)
           : null,
       child: control,

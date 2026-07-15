@@ -176,7 +176,6 @@ class _FossSelectFieldState<T> extends State<_FossSelectField<T>>
     var next = _highlight;
     for (var step = 0; step < count; step++) {
       next = (next + delta) % count;
-      if (next < 0) next += count;
       if (widget.items[next].enabled) {
         setState(() => _highlight = next);
         return;
@@ -439,7 +438,11 @@ class _FossSelectFieldState<T> extends State<_FossSelectField<T>>
         ),
         Positioned.fill(
           child: CustomSingleChildLayout(
-            delegate: _PopupLayout(anchor: anchor, bottomInset: bottomInset),
+            delegate: _PopupLayout(
+              anchor: anchor,
+              bottomInset: bottomInset,
+              textDirection: Directionality.of(context),
+            ),
             child: FadeTransition(
               opacity: _curve,
               child: ScaleTransition(
@@ -663,12 +666,20 @@ class _SelectRow<T> extends StatelessWidget {
 /// Positions the popup below the anchor, flipping above when there is no room,
 /// and clamping its height to the viewport.
 class _PopupLayout extends SingleChildLayoutDelegate {
-  const _PopupLayout({required this.anchor, required this.bottomInset});
+  const _PopupLayout({
+    required this.anchor,
+    required this.bottomInset,
+    required this.textDirection,
+  });
 
   final Rect anchor;
 
   /// Height taken by the on-screen keyboard at the bottom of the overlay.
   final double bottomInset;
+
+  /// The reading direction, so a popup narrower than its anchor hugs the start
+  /// edge rather than the physical left.
+  final TextDirection textDirection;
 
   @override
   BoxConstraints getConstraintsForChild(BoxConstraints constraints) {
@@ -699,7 +710,12 @@ class _PopupLayout extends SingleChildLayoutDelegate {
     final dy = placeBelow
         ? anchor.bottom + _popupOffset
         : anchor.top - _popupOffset - childSize.height;
-    final dx = anchor.left
+    // Align the popup's start edge to the anchor's start edge: the anchor left
+    // under LTR, the anchor right under RTL.
+    final startX = textDirection == TextDirection.ltr
+        ? anchor.left
+        : anchor.right - childSize.width;
+    final dx = startX
         .clamp(
           _popupMargin,
           math.max(_popupMargin, size.width - _popupMargin - childSize.width),
@@ -710,7 +726,9 @@ class _PopupLayout extends SingleChildLayoutDelegate {
 
   @override
   bool shouldRelayout(_PopupLayout oldDelegate) =>
-      oldDelegate.anchor != anchor || oldDelegate.bottomInset != bottomInset;
+      oldDelegate.anchor != anchor ||
+      oldDelegate.bottomInset != bottomInset ||
+      oldDelegate.textDirection != textDirection;
 }
 
 /// Paints a 1px rim inside the trigger, top-lit in dark mode, fading to nothing
