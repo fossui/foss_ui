@@ -1,3 +1,11 @@
+## 0.1.1
+
+### Added
+
+* `FossAccordion` presents a vertical stack of collapsible sections. It is
+  keyboard navigable, supports single or multiple open sections, and takes a
+  `FossAccordionStyle` for one-off overrides.
+
 ## 0.1.0
 
 The first stable release. `fossui` ships 21 themeable, accessible components,

@@ -2,6 +2,7 @@
 
 export '../foundation/foss_dialog_surface.dart'
     show FossDialogFooterVariant, FossDialogPresentation;
+export 'accordion/foss_accordion.dart';
 export 'alert/foss_alert.dart';
 export 'avatar/foss_avatar.dart';
 export 'badge/foss_badge.dart';
