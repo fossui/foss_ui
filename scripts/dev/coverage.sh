@@ -65,7 +65,11 @@ if ! command -v genhtml >/dev/null 2>&1; then
   exit 0
 fi
 
-genhtml coverage/lcov.info -o coverage/html --quiet
+genhtml coverage/lcov.info -o coverage/html --title "fossui coverage" --quiet
+
+# Skin the report: drop the fossui stylesheet over the one genhtml emitted.
+THEME="$(dirname "$0")/coverage-theme.txt"
+[ -f "$THEME" ] && cp "$THEME" coverage/html/gcov.css
 echo "HTML report: coverage/html/index.html"
 
 # CI builds the report to publish it, not to view it; opening it there hits a
