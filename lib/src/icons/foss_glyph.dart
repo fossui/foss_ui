@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+part 'glyphs/calendar.dart';
 part 'glyphs/check.dart';
 part 'glyphs/chevron_up_down.dart';
 part 'glyphs/close.dart';

@@ -9,11 +9,25 @@
   selection (`FossCalendar.single` / `.multiple` / `.range`), a `FossDateRange`
   value type, `minDate` / `maxDate` and `isDateEnabled` bounds, keyboard grid
   navigation, and a `FossCalendarStyle` for one-off overrides.
+* `FossDatePicker` opens a `FossCalendar` in a modal dialog from a field trigger
+  and shows the chosen date back in it (`FossDatePicker.single` / `.range`). It
+  presents as a bottom sheet by default or a centered card via `presentation`,
+  and takes a `format` callback with a built-in default (no date library), a
+  `closeOnSelect` policy, controlled (`open` + `onOpenChange`) or uncontrolled
+  open, keyboard open and `Escape` dismiss, `minDate` / `maxDate` /
+  `isDateEnabled` / `firstDayOfWeek` passed through to the calendar, and a
+  `FossDatePickerStyle` for one-off overrides.
 * `FossMeter` renders a static gauge for a bounded value, themed through
   `FossMeterStyle`.
 * `FossNumberField` pairs a numeric input with decrement and increment steppers,
   clamping to `[min, max]` with `step` and `largeStep`, `format` / `parse`
   callbacks, three sizes, and a `FossNumberFieldStyle` for one-off overrides.
+* `FossPopover` anchors an interactive floating surface to a trigger, opening on
+  a preferred `side` / `align` and flipping to stay on screen. It is controlled
+  (`open` + `onOpenChange`) or uncontrolled, with a `FossPopoverController` for
+  imperative open / close / toggle, an optional `modal` scrim with focus trap,
+  outside-tap and `Escape` dismiss, and a `FossPopoverStyle` for one-off
+  overrides.
 
 ## 0.1.0
 
