@@ -163,6 +163,14 @@ Coverage report: [fossui.github.io/fossui](https://fossui.github.io/fossui).
 Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the
 [Code of Conduct](CODE_OF_CONDUCT.md).
 
+## Support
+
+If fossui is useful to you, two clicks go a long way:
+
+- ⭐ [Star fossui on GitHub](https://github.com/fossui/fossui)
+- 👍 [Like fossui on pub.dev](https://pub.dev/packages/fossui)
+- ✉️ Questions or feedback: [support@fossui.org](mailto:support@fossui.org)
+
 ## Star History
 
 <!-- star-history:start -->
