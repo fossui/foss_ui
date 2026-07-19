@@ -22,6 +22,13 @@
 * `FossNumberField` pairs a numeric input with decrement and increment steppers,
   clamping to `[min, max]` with `step` and `largeStep`, `format` / `parse`
   callbacks, three sizes, and a `FossNumberFieldStyle` for one-off overrides.
+* `FossOtpField` is a segmented one-time-code field: a row of single-character
+  slots over one hidden input, with typing, backspace, arrow, and paste (or
+  platform one-time-code autofill) driving a shared value. It takes a required
+  `length`, controlled (`value` + `onChanged`) or uncontrolled use, an
+  `onCompleted` callback, two sizes, character `validation` (numeric default),
+  optional `obscure` masking, optional `groups` separators, an `error` state,
+  and a `FossOtpFieldStyle` for one-off overrides.
 * `FossPopover` anchors an interactive floating surface to a trigger, opening on
   a preferred `side` / `align` and flipping to stay on screen. It is controlled
   (`open` + `onOpenChange`) or uncontrolled, with a `FossPopoverController` for
