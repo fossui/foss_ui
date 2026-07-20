@@ -22,6 +22,7 @@ export 'progress/foss_progress.dart';
 export 'radio/foss_radio.dart';
 export 'select/foss_select.dart';
 export 'separator/foss_separator.dart';
+export 'skeleton/foss_skeleton.dart';
 export 'slider/foss_slider.dart';
 export 'spinner/foss_spinner.dart';
 export 'switch/foss_switch.dart';

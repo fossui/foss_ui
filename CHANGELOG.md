@@ -35,6 +35,10 @@
   imperative open / close / toggle, an optional `modal` scrim with focus trap,
   outside-tap and `Escape` dismiss, and a `FossPopoverStyle` for one-off
   overrides.
+* `FossSkeleton` is a loading placeholder that stands in for content while it
+  loads: a `muted`-filled box (or `FossSkeleton.circle` for avatars) with
+  superellipse corners and a shimmer that sweeps on the `skeleton` motion token
+  and stops under reduced motion. Size it to the content it replaces.
 * `FossToggle` is a two-state pressable button that holds an on / off state
   (`pressed` + `onPressedChanged`, null disables). It renders a label, a
   `leading` icon, or a square icon-only control, with `standard` and `outline`
