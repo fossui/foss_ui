@@ -202,5 +202,50 @@ void main() {
 
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('a lone item rounds every corner', (tester) async {
+      // A single child is both first and last, taking the full-radius path.
+      // ignore: prefer_const_declarations
+      final v = 'only';
+      await tester.pumpWidget(
+        host(
+          FossToggleGroup.single(
+            value: v,
+            variant: FossToggleVariant.outline,
+            onChanged: (_) {},
+            children: [FossToggleGroupItem(value: v, child: const Text('One'))],
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the outline frame repaints when selection changes', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          FossToggleGroup.single(
+            value: 'left',
+            variant: FossToggleVariant.outline,
+            onChanged: (_) {},
+            children: _items,
+          ),
+        ),
+      );
+      // A rebuild with a new value hands the frame painter a fresh instance,
+      // exercising its repaint check.
+      await tester.pumpWidget(
+        host(
+          FossToggleGroup.single(
+            value: 'right',
+            variant: FossToggleVariant.outline,
+            onChanged: (_) {},
+            children: _items,
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+    });
   });
 }

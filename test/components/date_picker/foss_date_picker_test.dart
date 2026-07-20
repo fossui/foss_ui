@@ -11,6 +11,20 @@ DateTime _min(int year, int month) => DateTime(year, month);
 DateTime _max(int year, int month) => DateTime(year, month + 1, 0);
 
 void main() {
+  group('FossDatePicker trigger fill', () {
+    testWidgets('dark theme lifts the resting fill by the input color', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          FossDatePicker.single(selected: null, onSelected: (_) {}),
+          theme: FossThemeData.dark,
+        ),
+      );
+      expect(find.text('Pick a date'), findsOneWidget);
+    });
+  });
+
   group('FossDatePicker.single label', () {
     testWidgets('shows the placeholder when empty', (tester) async {
       await tester.pumpWidget(

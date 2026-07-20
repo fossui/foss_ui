@@ -99,4 +99,15 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     expect(tester.hasRunningAnimations, isTrue);
   });
+
+  testWidgets('constructs from runtime dimensions', (tester) async {
+    // Non-const args so the constructors run at runtime rather than folding.
+    // ignore: prefer_const_declarations
+    final w = 64.0;
+    await tester.pumpWidget(_host(FossSkeleton(width: w, height: w)));
+    expect(_outerBox(tester).width, w);
+
+    await tester.pumpWidget(_host(FossSkeleton.circle(size: w)));
+    expect(_baseDecoration(tester).shape, isA<CircleBorder>());
+  });
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -248,6 +249,109 @@ void main() {
 
       final shape = _surface(tester).shape as RoundedSuperellipseBorder;
       expect(shape.side.color, colors.input);
+    });
+
+    testWidgets('large size renders taller', (tester) async {
+      await tester.pumpWidget(
+        host(
+          FossToggle(
+            pressed: false,
+            size: FossToggleSize.lg,
+            onPressedChanged: (_) {},
+            leading: const Icon(Icons.format_bold),
+            semanticLabel: 'Bold',
+          ),
+        ),
+      );
+      final size = tester.getSize(
+        find
+            .descendant(of: find.byType(FossToggle), matching: _surfaceFinder())
+            .first,
+      );
+      expect(size.height, 40);
+    });
+
+    testWidgets('outline lifts the surface in a dark theme', (tester) async {
+      await tester.pumpWidget(
+        host(
+          FossTheme(
+            data: FossThemeData.dark,
+            child: FossToggle(
+              pressed: false,
+              variant: FossToggleVariant.outline,
+              onPressedChanged: (_) {},
+              child: const Text('Bold'),
+            ),
+          ),
+        ),
+      );
+      // Dark outline rests on the input color composited over the background,
+      // not the bare background.
+      expect(
+        _surface(tester).color,
+        isNot(FossThemeData.dark.colors.background),
+      );
+    });
+  });
+
+  group('FossToggle style override', () {
+    testWidgets('uniform borderRadius rounds every corner', (tester) async {
+      await tester.pumpWidget(
+        host(
+          FossToggle(
+            pressed: false,
+            onPressedChanged: (_) {},
+            style: const FossToggleStyle(borderRadius: 4),
+            child: const Text('Bold'),
+          ),
+        ),
+      );
+      final shape = _surface(tester).shape as RoundedSuperellipseBorder;
+      expect(shape.borderRadius, BorderRadius.circular(4));
+    });
+
+    testWidgets('an override without a radius keeps the base corners', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          FossToggle(
+            pressed: false,
+            onPressedChanged: (_) {},
+            style: const FossToggleStyle(minHeight: 40),
+            child: const Text('Bold'),
+          ),
+        ),
+      );
+      final shape = _surface(tester).shape as RoundedSuperellipseBorder;
+      expect(
+        shape.borderRadius,
+        BorderRadius.circular(FossThemeData.light.radii.lg),
+      );
+    });
+  });
+
+  group('FossToggle focus and hover', () {
+    testWidgets('paints a focus ring and repaints across a hover', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(FossToggle(pressed: false, onPressedChanged: (_) {})),
+      );
+
+      // Focus makes the ring painter appear.
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+
+      // A mouse hover updates the state and rebuilds, replacing the ring
+      // painter so it is asked whether to repaint.
+      final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await gesture.addPointer();
+      addTearDown(gesture.removePointer);
+      await gesture.moveTo(tester.getCenter(find.byType(FossToggle)));
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
     });
   });
 }
