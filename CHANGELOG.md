@@ -39,6 +39,13 @@
   loads: a `muted`-filled box (or `FossSkeleton.circle` for avatars) with
   superellipse corners and a shimmer that sweeps on the `skeleton` motion token
   and stops under reduced motion. Size it to the content it replaces.
+* `FossText` renders a string in a type step (`FossTextSize`) at one of four
+  weights (`FossTextWeight`), with an optional semantic color role
+  (`FossTextColor`) that uses the `foreground` role when unset. Named
+  constructors (`FossText.body` / `.label` / `.title` / `.heading` / `.display`
+  / `.caption`) cover the common roles, a `TextStyle` merges over the resolved
+  style for a one-off, an opt-in `header` flag marks a true document heading for
+  assistive technology, and the common `Text` props pass through.
 * `FossToggle` is a two-state pressable button that holds an on / off state
   (`pressed` + `onPressedChanged`, null disables). It renders a label, a
   `leading` icon, or a square icon-only control, with `standard` and `outline`
@@ -50,6 +57,12 @@
   segmented bar with a shared border and rounded outer ends; `standard` spaces
   them. It supports horizontal or vertical `orientation`, group and per-item
   disable, and a `FossToggleGroupStyle` for one-off overrides.
+
+### Fixed
+
+* The default type scale now renders in the bundled Geist font in consumer
+  apps. The family is referenced package-qualified, so text no longer fell back
+  to the platform system font.
 
 ## 0.1.0
 
