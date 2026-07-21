@@ -142,11 +142,24 @@ as the documented companion.
 With no platform channels, fossui runs anywhere Flutter does: Android, iOS, web,
 macOS, Windows, and Linux are all supported.
 
+## AI-native
+
+fossui runs an MCP server so your AI coding assistant writes fossui code against
+the real component API instead of guessing prop names and enum values. It works
+with any MCP client (Claude Code, Cursor, VS Code, and more) over one endpoint:
+
+```
+https://mcp.fossui.org
+```
+
+Per-client setup and the full tool list are in the
+[AI-native docs](https://fossui.org/docs/ai-native).
+
 ## Ecosystem
 
 - Documentation: [fossui.org](https://fossui.org)
 - Live gallery: [play.fossui.org](https://play.fossui.org)
-- MCP server: [mcp.fossui.org](https://mcp.fossui.org)
+- AI-native (MCP): [fossui.org/docs/ai-native](https://fossui.org/docs/ai-native)
 - Package: [pub.dev/packages/fossui](https://pub.dev/packages/fossui)
 
 ## Development
