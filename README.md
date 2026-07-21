@@ -123,7 +123,7 @@ The library covers input, feedback, overlays, and layout:
 | --- | --- |
 | Actions and input | Button, TextField, Select, Combobox, Checkbox, Radio, Switch, Slider |
 | Feedback | Alert, Badge, Progress, Spinner, Toast, Tooltip |
-| Overlays | Dialog, Drawer |
+| Overlays | Dialog, Drawer (sheet and bottom sheet) |
 | Layout and media | Card, Tabs, Separator, Avatar |
 
 See the [components roadmap](doc/components/roadmap.md) for what is shipped and

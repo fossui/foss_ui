@@ -1,7 +1,8 @@
 name: fossui
 description: >-
   An open-source Flutter UI library of themeable, accessible components (buttons,
-  inputs, dialogs, overlays), inspired by coss.com/ui, Cal.com's design system.
+  inputs, dialogs, drawers, sheets, overlays), inspired by coss.com/ui, Cal.com's
+  design system.
 version: 0.1.0
 homepage: https://fossui.org
 repository: https://github.com/fossui/fossui
