@@ -14,17 +14,16 @@ Themed from one source. Inspired by [coss.com/ui](https://coss.com/ui), Cal.com'
 </p>
 
 fossui is a component set for developers tired of every Flutter app looking like
-Material. It drops into any app, whether you use `MaterialApp`, `CupertinoApp`,
-or a bare `WidgetsApp`, and reads its own theme first rather than replacing
-yours. The look is drawn from [coss.com/ui](https://coss.com/ui), Cal.com's
-design system: clean and neutral, with superellipse corners. One import, one
-theme, light and dark out of the box.
+Material. It drops into any app (`MaterialApp`, `CupertinoApp`, or a bare
+`WidgetsApp`) and reads its own theme first, not replacing yours. The look comes
+from [coss.com/ui](https://coss.com/ui), Cal.com's design system: clean, neutral,
+superellipse corners. One import, one theme, light and dark out of the box.
 
 > [!IMPORTANT]
 > Unofficial and independent. Not affiliated with or endorsed by Cal.com, Inc.
 > or coss.com. See [NOTICE](NOTICE) for attribution.
 
-## Features
+## Why fossui
 
 - **A look that isn't Material.** A neutral, understated aesthetic with
   superellipse corners, drawn from the coss/Cal.com design language.
