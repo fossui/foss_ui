@@ -26,26 +26,37 @@ right-to-left layout, and three layers of tests. That bar is written down in
 - [x] **Checkbox** : on/off control, with a group for related options.
 - [x] **Radio group** : single choice from a set.
 - [x] **Switch** : toggle control.
+- [x] **Toggle** : a two-state pressable button, standard or outline.
+- [x] **Toggle group** : a set of toggles, single or multiple selection.
 - [x] **Slider** : pick a value from a range.
 - [x] **Select** : single or multiple choice from a dropdown.
 - [x] **Combobox and autocomplete** : filterable select, single or multi.
+- [x] **Number field** : numeric input with steppers, clamped to a range.
+- [x] **OTP field** : segmented one-time-code entry.
+- [x] **Calendar** : month grid with single, multiple, or range selection.
+- [x] **Date picker** : date selection from a field, in a bottom sheet or a
+  centered dialog.
 
 ### Layout and surfaces
 
 - [x] **Card** : surface container with the package elevation.
 - [x] **Separator** : thin divider.
 - [x] **Tabs** : tabbed panels, horizontal or vertical.
+- [x] **Accordion** : expandable, stacked sections, single or multiple open.
 
 ### Feedback and status
 
 - [x] **Spinner** : a themed loading indicator, also used inside Button.
 - [x] **Progress** : determinate progress bar.
+- [x] **Skeleton** : a loading placeholder, box or circle, with a shimmer.
+- [x] **Meter** : static gauge for a bounded value.
 - [x] **Badge** : small status or count pill.
 - [x] **Avatar** : image with an initials fallback.
 - [x] **Alert** : inline status message.
 
 ### Overlays
 
+- [x] **Popover** : floating panel anchored to a trigger.
 - [x] **Dialog** : modal dialog over a dimmed scrim.
 - [x] **Alert dialog** : non-dismissible confirm dialog.
 - [x] **Drawer** : panel that slides in from an edge.
@@ -54,17 +65,8 @@ right-to-left layout, and three layers of tests. That bar is written down in
 
 ## Planned
 
-- [ ] **Accordion** : expandable, stacked sections.
-- [ ] **Calendar** : month grid for date display and selection.
-- [ ] **Command** : searchable command palette.
-- [ ] **Date Picker** : date selection in a calendar popover.
-- [ ] **Meter** : static gauge for a bounded value.
-- [ ] **Number Field** : numeric input with steppers.
-- [ ] **OTP Field** : segmented one-time-code entry.
-- [ ] **Popover** : floating panel anchored to a trigger.
-- [ ] **Sheet** : panel that slides in from an edge.
-- [ ] **Toggle** : a two-state pressable button.
-- [ ] **Toggle Group** : a set of toggles, single or multiple.
+The core set above is complete. New components are added as real needs come in.
+Need one sooner? Open an issue and say so.
 
 ## How the order is decided
 

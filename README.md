@@ -2,10 +2,10 @@
 
 <img src="assets/logo.png" alt="fossui" width="200" />
 
-**Minimal, framework-agnostic Flutter components.<br/>
+**The Fresh, Minimal Flutter UI kit.<br/>
 Themed from one source. Inspired by [coss.com/ui](https://coss.com/ui), Cal.com's design system.**
 
-[![Pub Version](https://img.shields.io/pub/v/fossui?logo=dart&color=0175C2)](https://pub.dev/packages/fossui) [![Pub Points](https://img.shields.io/pub/points/fossui?logo=dart&color=0175C2)](https://pub.dev/packages/fossui/score) [![Coverage](https://img.shields.io/endpoint?url=https://fossui.github.io/fossui/coverage.json)](https://fossui.github.io/fossui) 
+[![Pub Version](https://img.shields.io/pub/v/fossui?logo=dart&color=0175C2)](https://pub.dev/packages/fossui) [![Pub Likes](https://img.shields.io/pub/likes/fossui?logo=dart&color=0175C2)](https://pub.dev/packages/fossui) [![GitHub stars](https://img.shields.io/github/stars/fossui/fossui?logo=github)](https://github.com/fossui/fossui) [![Coverage](https://img.shields.io/endpoint?url=https://coverage.fossui.org/coverage.json)](https://coverage.fossui.org)
 
 </div>
 
@@ -38,9 +38,10 @@ theme, light and dark out of the box.
   token: color, type, radius, spacing, shadow, motion. Reskin the whole app,
   light and dark, in one call.
 - **Light on dependencies.** One runtime dependency and no bundled icon package.
-  A worst-case app that imports nearly every component adds about 314 KB, most of
-  it the Geist font (~36 KB over the wire), and the Dart code tree-shakes to what
-  you use. Pass your own icons through plain `Widget` slots.
+  A worst-case app that imports nearly every component adds about 384 KB: roughly
+  310 KB of Dart code, which tree-shakes down to what you actually use, plus the
+  Geist font (74 KB installed, ~35 KB over the wire). Pass your own icons through
+  plain `Widget` slots.
 - **Preview-rich docs.** Every component's API doc renders a live light and dark
   preview, not just text, and the same preview shows on hover in your IDE. Each
   one states plainly what it does and does not do.
@@ -51,7 +52,7 @@ theme, light and dark out of the box.
 
 ```yaml
 dependencies:
-  fossui: ^0.1.0
+  fossui: ^0.1.1
 ```
 
 Or from the command line:
@@ -121,14 +122,15 @@ The library covers input, feedback, overlays, and layout:
 
 | Group | Components |
 | --- | --- |
-| Actions and input | Button, TextField, Select, Combobox, Checkbox, Radio, Switch, Slider |
-| Feedback | Alert, Badge, Progress, Spinner, Toast, Tooltip |
-| Overlays | Dialog, Drawer |
-| Layout and media | Card, Tabs, Separator, Avatar |
+| Actions and input | Button, TextField, NumberField, OtpField, Select, Combobox, Checkbox, Radio, Switch, Toggle, ToggleGroup, Slider, DatePicker |
+| Feedback | Alert, Badge, Meter, Progress, Skeleton, Spinner, Toast, Tooltip |
+| Overlays | Dialog, Drawer (sheet and bottom sheet), Popover |
+| Layout and media | Accordion, Card, Tabs, Separator, Text, Calendar, Avatar |
 
-See the [components roadmap](doc/components/roadmap.md) for what is shipped and
-what is planned, and the [component checklist](doc/components/checklist.md) for
-the bar each one clears.
+See the [components roadmap](https://github.com/fossui/fossui/blob/main/doc/components/roadmap.md)
+for what is shipped and what is planned, and the
+[component checklist](https://github.com/fossui/fossui/blob/main/doc/components/checklist.md)
+for the bar each one clears.
 
 ## Icons
 
@@ -142,11 +144,24 @@ as the documented companion.
 With no platform channels, fossui runs anywhere Flutter does: Android, iOS, web,
 macOS, Windows, and Linux are all supported.
 
+## AI-native
+
+fossui runs an MCP server so your AI coding assistant writes fossui code against
+the real component API instead of guessing prop names and enum values. It works
+with any MCP client (Claude Code, Cursor, VS Code, and more) over one endpoint:
+
+```
+https://mcp.fossui.org
+```
+
+Per-client setup and the full tool list are in the
+[AI-native docs](https://fossui.org/docs/ai-native).
+
 ## Ecosystem
 
 - Documentation: [fossui.org](https://fossui.org)
 - Live gallery: [play.fossui.org](https://play.fossui.org)
-- MCP server: [mcp.fossui.org](https://mcp.fossui.org)
+- AI-native (MCP): [fossui.org/docs/ai-native](https://fossui.org/docs/ai-native)
 - Package: [pub.dev/packages/fossui](https://pub.dev/packages/fossui)
 
 ## Development
@@ -159,9 +174,26 @@ fvm flutter pub get
 fvm flutter test
 ```
 
-Coverage report: [fossui.github.io/fossui](https://fossui.github.io/fossui).
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the
+The test suite runs on every change and holds full line coverage; browse the
+live report at [coverage.fossui.org](https://coverage.fossui.org).
+
+Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the
 [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Acknowledgements
+
+The look and component API are drawn from [coss.com/ui](https://coss.com/ui), the
+Cal.com design system, with ideas from [Base UI](https://github.com/mui/base-ui)
+and [shadcn/ui](https://github.com/shadcn-ui/ui). Full attribution is in
+[NOTICE](NOTICE).
+
+## Support
+
+If fossui is useful to you, two clicks go a long way:
+
+- ⭐ [Star fossui on GitHub](https://github.com/fossui/fossui)
+- 👍 [Like fossui on pub.dev](https://pub.dev/packages/fossui)
+- ✉️ Questions or feedback: [support@fossui.org](mailto:support@fossui.org)
 
 ## Star History
 
