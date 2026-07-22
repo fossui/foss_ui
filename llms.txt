@@ -68,7 +68,8 @@ All are `Foss`-prefixed. Variants and sizes are enums passed as named params; a 
 - FossToggle: A button that holds a two-state pressed look: tap it to turn it on, tap again to release. It is the control behind a formatting button (bold, italic) in a toolbar, sized and shaped like a FossButton but carrying a binary on / off state. (Variant: standard | outline. Size: sm | md | lg)
   - style FossToggleStyle(backgroundColor, foregroundColor, side, borderRadius, cornerRadius, padding, minHeight, textStyle, shadow, iconSize, gap, disabledOpacity)
   - item FossToggleGroupItem(value, leading, child, semanticLabel, enabled)
-  - group FossToggleGroup(children, value, onChanged, variant, size, orientation, enabled, style)
+  - group FossToggleGroup.single(children, value, onChanged, variant, size, orientation, enabled, style)
+  - group FossToggleGroup.multiple(children, value, onChanged, variant, size, orientation, enabled, style)
   - style FossToggleGroupStyle(gap, connectedBorderColor)
 
 ### Feedback
@@ -177,6 +178,7 @@ The wrong form, then the fix: the errors a model makes writing fossui without th
 - FossDrawer: `showModalBottomSheet(context: context, builder: (_) => FossDrawer(content: Body()))` -> `showFossDrawer(context: context, builder: (context) => const FossDrawer(content: Body()))`
 - FossDrawer: `FossDrawer(variant: 'straight', content: Body())` -> `FossDrawer(variant: FossDrawerVariant.straight, content: const Body())`
 - FossDrawer: `FossDrawer(borderRadius: 12, content: Body())` -> `FossDrawer(content: const Body(), style: const FossDrawerStyle(borderRadius: 12))`
+- FossDrawer: `FossSheet(content: Body())` -> `showFossDrawer(context: context, builder: (context) => const FossDrawer(content: Body()))`
 - FossMeter: `FossMeter(value: 40, onChanged: (v) {})` -> `FossMeter(value: 40, label: 'Storage')`
 - FossMeter: `FossMeter(value: used, fillColor: Colors.green)` -> `FossMeter(value: used, style: const FossMeterStyle(fillColor: Color(0xFF16A34A)))`
 - FossMeter: `FossMeter(value: 3, max: 5, formatValue: (v) => '$v')` -> `FossMeter(value: 3, max: 5, formatValue: (value, min, max) => '$value of $max')`
